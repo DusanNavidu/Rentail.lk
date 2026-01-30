@@ -8,141 +8,116 @@ import {
   Keyboard,
   Alert,
   Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
 } from "react-native";
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import { useLoader } from "@/hooks/useLoader";
 import { login } from "@/services/authService";
-// Icons සඳහා (Expo වල default එනවා)
-import { Feather } from "@expo/vector-icons";
 
 const Login = () => {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // Password පෙන්වන්න/හංගන්න
 
   const { showLoader, hideLoader, isLoading } = useLoader();
 
   const handleLogin = async () => {
     if (!email || !password || isLoading) {
-      Alert.alert("Error", "Please enter email and password");
+      Alert.alert("Please enter email and password");
       return;
     }
     try {
       showLoader();
       await login(email, password);
-      // router.replace("/home"); 
-    } catch (e: any) {
+      alert("Login successful");
+      router.replace("/home");
+    } catch (e) {
       console.error(e);
-      Alert.alert("Login Failed", e.message);
+      Alert.alert("Login fail");
     } finally {
       hideLoader();
     }
   };
-
   return (
-    // 1. Keyboard එක එනකොට UI එක උඩට ගන්න කොටස
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1"
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
-          className="bg-slate-50"
-          keyboardShouldPersistTaps="handled"
-        >
-          <View className="p-6 justify-center items-center">
-            
-            {/* 2. App Logo & Header */}
-            <View className="items-center mb-8">
-              <Image
-                // ඔයාගේ path එක අනුව වෙනස් කරගන්න
-                source={require("../../assets/images/icon.png")} 
-                className="w-24 h-24 rounded-2xl mb-4 shadow-sm"
-                resizeMode="contain"
-              />
-              <Text className="text-3xl font-extrabold text-slate-800">
-                Welcome Back!
-              </Text>
-              <Text className="text-slate-500 mt-2 text-base">
-                Sign in to Rentail.lk
-              </Text>
-            </View>
-
-            {/* 3. Form Container */}
-            <View className="w-full bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-              
-              {/* Email Input */}
-              <Text className="text-slate-700 font-medium mb-2 ml-1">Email</Text>
-              <View className="flex-row items-center border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 mb-4 focus:border-blue-500">
-                <Feather name="mail" size={20} color="#64748b" />
-                <TextInput
-                  placeholder="Enter your email"
-                  placeholderTextColor="#94a3b8"
-                  className="flex-1 ml-3 text-slate-700 text-base"
-                  value={email}
-                  onChangeText={setEmail}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                />
-              </View>
-
-              {/* Password Input */}
-              <Text className="text-slate-700 font-medium mb-2 ml-1">Password</Text>
-              <View className="flex-row items-center border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 mb-6 focus:border-blue-500">
-                <Feather name="lock" size={20} color="#64748b" />
-                <TextInput
-                  placeholder="Enter your password"
-                  placeholderTextColor="#94a3b8"
-                  className="flex-1 ml-3 text-slate-700 text-base"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                  <Feather
-                    name={showPassword ? "eye" : "eye-off"}
-                    size={20}
-                    color="#64748b"
-                  />
-                </TouchableOpacity>
-              </View>
-
-              {/* Login Button */}
-              <Pressable
-                onPress={handleLogin}
-                className="bg-blue-600 active:bg-blue-700 py-4 rounded-xl shadow-md shadow-blue-200"
-              >
-                <Text className="text-white text-lg font-bold text-center">
-                  Login
-                </Text>
-              </Pressable>
-
-              {/* Forgot Password */}
-              <TouchableOpacity className="mt-4 items-center">
-                <Text className="text-slate-500 text-sm">Forgot Password?</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Register Link */}
-            <View className="flex-row justify-center mt-8">
-              <Text className="text-slate-600">Don't have an account? </Text>
-              <TouchableOpacity onPress={() => router.push("/register")}>
-                <Text className="text-blue-600 font-bold ml-1">
-                  Create Account
-                </Text>
-              </TouchableOpacity>
-            </View>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View className="flex-1 justify-between px-6 bg-white">
+        <View className="flex-row items-center">
+          <Image
+              source={require("../../assets/images/icon.png")}
+              className="w-24 h-24 bg-white rounded-full p-4"
+              resizeMode="contain"
+            />
+            <Text className="text-3xl font-bold">Rentail.lk</Text>
+        </View>
+        <View>
+          <Text className="text-3xl font-bold">Welcome Back</Text>
+          <Text className="text-3xl font-bold">Ready to hit the road.</Text>
+        </View>
+        <View>
+          <TextInput
+            placeholder="Email"
+            placeholderTextColor="#6B7280"
+            className="bg-white p-3 mb-4 rounded-xl"
+            style={{ borderWidth: 1, borderColor: 'secondary', borderStyle: 'solid' }}
+            value={email}
+            onChangeText={setEmail}
+          />
+          <TextInput
+            placeholder="Password"
+            placeholderTextColor="#6B7280"
+            className="bg-white p-3 mb-4 rounded-xl"
+            style={{ borderWidth: 1, borderColor: 'secondary', borderStyle: 'solid' }}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
+          <View>
+            <Text className="text-[8px] text-secondary">Forgot Password?</Text>
           </View>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+        </View>
+        
+        <View className="flex-col gap-4 mb-10">
+          <Pressable
+            onPress={handleLogin}
+            className="bg-black px-6 py-3 rounded-3xl"
+          >
+            <Text className="text-white text-lg text-center font-bold">Login</Text>
+          </Pressable>
+          <Pressable 
+            className="px-6 py-3 rounded-3xl"
+            style={{ borderWidth: 1, borderColor: 'secondary', borderStyle: 'solid' }}
+            onPress={() => router.push("/(auth)/register")}
+          >
+            <Text className="text-center text-secondary font-bold">
+              Sign Up
+            </Text>
+          </Pressable>
+        </View>
+        <View className="flex-row items-center justify-center mb-6 gap-6">
+          <View className="w-24 bg-black" style={{ height: 1 }}></View>
+          <Text className="text-center text-secondary text-sm px-4">
+            Or
+          </Text>
+          <View className="w-24 bg-black" style={{ height: 1 }}></View>
+        </View>
+        <View>
+          <Pressable className="bg-white mb-4 px-6 py-3 rounded-3xl border border-secondary" style={{ borderWidth: 1, borderColor: 'secondary', borderStyle: 'solid' }}>
+            <Text className="text-center text-secondary text-sm">
+              Continue with Google
+            </Text>
+          </Pressable>
+          <Pressable className="bg-white px-6 py-3 rounded-3xl border border-secondary" style={{ borderWidth: 1, borderColor: 'secondary', borderStyle: 'solid' }}>
+            <Text className="text-center text-secondary text-sm">
+              Continue with FaceBook
+            </Text>
+          </Pressable>
+        </View>
+        <View className="flex justify-center items-center mb-2">
+          <View className="bg-black w-24 h-1 rounded-2xl flex justify-center"></View>
+        </View>
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 
