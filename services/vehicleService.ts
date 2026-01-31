@@ -10,15 +10,11 @@ import {
   orderBy
 } from "firebase/firestore";
 import { db } from "./firebase";
-// ✅ Legacy Import එක (අලුත් Expo Version වලට)
 import * as FileSystem from 'expo-file-system/legacy';
 
 const auth = getAuth();
 const vehiclesCollection = collection(db, "vehicles");
 
-// ==========================================
-// ✅ CLOUDINARY CONFIG (Confirmed from Screenshots)
-// ==========================================
 const CLOUD_NAME = "dkige4fxm"; 
 const UPLOAD_PRESET = "rentail_preset"; 
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
@@ -31,7 +27,7 @@ const uploadToCloudinary = async (uri: string) => {
 
     const response = await FileSystem.uploadAsync(CLOUDINARY_URL, uri, {
       httpMethod: 'POST',
-      uploadType: 1, // 1 = Multipart Upload
+      uploadType: 1,
       fieldName: 'file',
       parameters: {
         upload_preset: UPLOAD_PRESET,
@@ -39,7 +35,6 @@ const uploadToCloudinary = async (uri: string) => {
       },
     });
 
-    // Response එක JSON කරනවා
     const data = JSON.parse(response.body);
 
     // Error එකක් ආවොත් බලනවා

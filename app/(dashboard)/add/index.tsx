@@ -6,49 +6,49 @@ import {
   Image,
   Alert,
   ActivityIndicator,
-  RefreshControl, // ✅ Pull-to-refresh සඳහා
+  RefreshControl,
 } from "react-native";
 import React, { useCallback, useState } from "react";
 import { MaterialIcons, Ionicons, FontAwesome5 } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useLoader } from "@/hooks/useLoader";
-// ඔයාගේ Service path එක හරිද බලන්න
 import { deleteVehicle, getAllVehicles } from "@/services/vehicleService";
+import Toast from 'react-native-toast-message';
 
 const VehicleList = () => {
   const router = useRouter();
   const { showLoader, hideLoader } = useLoader();
   const [vehicles, setVehicles] = useState<any[]>([]);
-  const [refreshing, setRefreshing] = useState(false); // ✅ Refresh State
-  const [loadingData, setLoadingData] = useState(true); // ✅ Initial Loading State
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
 
-  // Data Fetching Function
   const fetchVehicles = async () => {
     try {
       const data = await getAllVehicles();
       setVehicles(data);
     } catch (error) {
-      console.log("Error fetching vehicles:", error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to load vehicles 👋',
+      });
     } finally {
       setLoadingData(false);
       setRefreshing(false);
     }
   };
 
-  // Screen එකට එන හැම වෙලේම Data update වෙනවා
   useFocusEffect(
     useCallback(() => {
       fetchVehicles();
     }, [])
   );
 
-  // පහළට අදිනකොට Refresh වෙන්න
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchVehicles();
   }, []);
 
-  // Delete Function
   const handleDelete = (id: string) => {
     Alert.alert("Delete Vehicle", "Are you sure you want to remove this?", [
       { text: "Cancel", style: "cancel" },
@@ -59,11 +59,21 @@ const VehicleList = () => {
           showLoader();
           try {
             await deleteVehicle(id);
-            // List එකෙන් අයින් කරන්න ආයේ fetch නොකර (Optimistic update)
             setVehicles((prev) => prev.filter((item) => item.id !== id));
-            Alert.alert("Deleted", "Vehicle removed successfully");
+            
+            Toast.show({
+              type: 'success',
+              text1: 'Deleted!',
+              text2: 'Vehicle removed successfully 🗑️',
+              visibilityTime: 3000,
+            });
+
           } catch {
-            Alert.alert("Error", "Could not delete");
+            Toast.show({
+              type: 'error',
+              text1: 'Failed',
+              text2: 'Could not delete vehicle ❌',
+            });
           } finally {
             hideLoader();
           }
@@ -72,23 +82,18 @@ const VehicleList = () => {
     ]);
   };
 
-  // Card UI Component
   const renderItem = ({ item }: { item: any }) => (
     <View className="bg-white rounded-2xl mb-5 shadow-sm border border-gray-100 overflow-hidden">
-      {/* Vehicle Image (Cloudinary URL) */}
       <Image
         source={{ uri: item.imageUrl || "https://via.placeholder.com/300" }}
         className="w-full h-48 bg-gray-200"
         resizeMode="cover"
       />
-      
-      {/* Price Badge */}
       <View className="absolute top-3 right-3 bg-black/80 px-3 py-1 rounded-full">
         <Text className="text-white font-bold text-xs">Rs. {item.price}/Day</Text>
       </View>
 
       <View className="p-4">
-        {/* Title & Delete */}
         <View className="flex-row justify-between items-start mb-2">
           <View className="flex-1 mr-2">
             <Text className="text-lg font-bold text-gray-900" numberOfLines={1}>
@@ -107,7 +112,6 @@ const VehicleList = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Features Row */}
         <View className="flex-row gap-3 mt-2 border-t border-gray-100 pt-3">
             <View className="flex-row items-center bg-gray-50 px-3 py-1.5 rounded-lg">
                 <MaterialIcons name="event-seat" size={14} color="#4b5563" />
@@ -124,7 +128,6 @@ const VehicleList = () => {
 
   return (
     <View className="flex-1 bg-gray-50">
-      {/* Header */}
       <View className="bg-white p-4 pt-14 pb-4 border-b border-gray-200 flex-row justify-between items-center shadow-sm z-10">
          <Text className="text-2xl font-extrabold text-gray-900">My Vehicles</Text>
          <TouchableOpacity 
@@ -138,7 +141,6 @@ const VehicleList = () => {
          </TouchableOpacity>
       </View>
 
-      {/* List Area */}
       {loadingData ? (
         <View className="flex-1 justify-center items-center">
             <ActivityIndicator size="large" color="black" />
@@ -151,7 +153,7 @@ const VehicleList = () => {
             renderItem={renderItem}
             contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
             showsVerticalScrollIndicator={false}
-            refreshControl={ // ✅ Pull to Refresh Component
+            refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
             ListEmptyComponent={
@@ -160,16 +162,16 @@ const VehicleList = () => {
                         <FontAwesome5 name="car-side" size={40} color="#9ca3af" />
                     </View>
                     <Text className="text-gray-500 font-semibold text-lg">No vehicles found</Text>
-                    <Text className="text-gray-400 text-sm mt-1">Add a new vehicle to get started</Text>
                 </View>
             }
         />
       )}
 
-      {/* Floating Action Button (Add) */}
+      <View className="h-[70px]"></View>
+
       <TouchableOpacity
         className="bg-black rounded-full shadow-xl absolute bottom-[110px] right-6 w-16 h-16 justify-center items-center z-50 border-2 border-white"
-        onPress={() => router.push("/add/form")} // පරණ path එකම තියලා තියෙන්නේ
+        onPress={() => router.push("/add/form")}
         activeOpacity={0.8}
       >
         <MaterialIcons name="add" size={32} color="#fff" />

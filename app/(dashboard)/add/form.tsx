@@ -4,7 +4,6 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -15,12 +14,12 @@ import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker"; 
 import { useLoader } from "@/hooks/useLoader";
 import { addVehicle } from "@/services/vehicleService"; 
+import Toast from 'react-native-toast-message';
 
 const VehicleForm = () => {
   const router = useRouter();
   const { showLoader, hideLoader, isLoading } = useLoader();
 
-  // States
   const [image, setImage] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
@@ -28,10 +27,8 @@ const VehicleForm = () => {
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
 
-  // ✅ FIX: Gallery Function (Corrected)
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      // mediaTypes: ... (මේ පේළිය අයින් කළා. Default ගන්නේ Images නිසා දැන් Error එන්නේ නෑ)
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.7, 
@@ -46,23 +43,45 @@ const VehicleForm = () => {
     if (isLoading) return;
 
     if (!title || !price || !seats || !location) {
-      Alert.alert("Missing Fields", "Please fill in all required fields.");
+      Toast.show({
+        type: 'error',
+        text1: 'Missing Details ⚠️',
+        text2: 'Please fill in all the required fields!',
+      });
       return;
     }
 
     if (!image) {
-        Alert.alert("Image Required", "Please select an image for the vehicle.");
+        Toast.show({
+            type: 'info',
+            text1: 'No Image Selected 📸',
+            text2: 'Please pick a photo of your vehicle.',
+        });
         return;
     }
 
     showLoader();
     try {
       await addVehicle(image, title, price, seats, location, description);
-      Alert.alert("Success", "Vehicle added successfully!");
-      router.back();
+      
+      Toast.show({
+        type: 'success',
+        text1: 'Published! 🎉',
+        text2: 'Vehicle added successfully to the market.',
+        visibilityTime: 3000,
+      });
+
+      setTimeout(() => {
+        router.back();
+      }, 3000);
+
     } catch (err: any) {
       console.log(err);
-      Alert.alert("Error", "Failed to upload. Check internet.");
+      Toast.show({
+        type: 'error',
+        text1: 'Upload Failed ❌',
+        text2: 'Check your internet connection and try again.',
+      });
     } finally {
       hideLoader();
     }
@@ -74,7 +93,6 @@ const VehicleForm = () => {
       style={{ flex: 1 }}
     >
       <ScrollView className="flex-1 bg-white">
-        {/* Header */}
         <View className="flex-row items-center p-4 border-b border-gray-100">
           <TouchableOpacity onPress={() => router.back()} className="p-2">
             <MaterialIcons name="arrow-back-ios" size={20} color="black" />
@@ -83,7 +101,6 @@ const VehicleForm = () => {
         </View>
 
         <View className="p-6">
-          {/* Image Picker Area */}
           <TouchableOpacity
             onPress={pickImage}
             className="w-full h-52 bg-gray-100 rounded-2xl border-2 border-dashed border-gray-300 justify-center items-center mb-6 overflow-hidden"
@@ -104,7 +121,6 @@ const VehicleForm = () => {
             )}
           </TouchableOpacity>
 
-          {/* Form Fields */}
           <Text className="text-gray-700 font-semibold mb-2 ml-1">Vehicle Name / Model</Text>
           <TextInput
             className="bg-gray-50 border border-gray-200 p-4 rounded-xl mb-4 text-gray-800"
@@ -155,7 +171,6 @@ const VehicleForm = () => {
             style={{ textAlignVertical: 'top' }}
           />
 
-          {/* Submit Button */}
           <TouchableOpacity
             onPress={handleSubmit}
             className="bg-black py-4 rounded-2xl mt-4 shadow-md"
@@ -165,6 +180,7 @@ const VehicleForm = () => {
             </Text>
           </TouchableOpacity>
         </View>
+        
         <View className="h-[100px]"></View>
       </ScrollView>
     </KeyboardAvoidingView>
