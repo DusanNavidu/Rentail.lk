@@ -22,6 +22,7 @@ import Toast from 'react-native-toast-message';
 import { Dropdown } from 'react-native-element-dropdown';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
+import { Label } from "@react-navigation/elements";
 
 const brands = [
   { label: 'Toyota', value: 'Toyota' }, { label: 'Nissan', value: 'Nissan' },
@@ -33,6 +34,12 @@ const brands = [
   { label: 'Tata', value: 'Tata' }, { label: 'Mahindra', value: 'Mahindra' },
   { label: 'Bajaj', value: 'Bajaj' }, { label: 'TVS', value: 'TVS' },
   { label: 'Yamaha', value: 'Yamaha' }, { label: 'Hero', value: 'Hero' },
+  { label: 'Royal Enfield', value: 'Royal Enfield' }, { label: 'Ducati', value: 'Ducati' },
+  { label: 'Harley-Davidson', value: 'Harley-Davidson' }, { label: 'Kawasaki', value: 'Kawasaki' },
+  { label: 'Lanka Ashok Leyland', value: 'Lanka Ashok Leyland' }, { label: 'Eicher', value: 'Eicher' },
+  { label: 'Hino', value: 'Hino' }, { label: 'Isuzu', value: 'Isuzu' }, { label: 'King Long', value: 'King Long' },
+  { label: 'Yotong', value: 'Yotong' }, { label: 'Higer', value: 'Higer' }, { label: 'Micro', value: 'Micro' },
+  { label: 'Mintzubishi', value: 'Mintzubishi' }, { label: 'Ford', value: 'Ford' },
   { label: 'Other', value: 'Other' },
 ];
 
@@ -40,7 +47,7 @@ const categories = [
   { label: 'Car', value: 'Car' }, { label: 'Van', value: 'Van' },
   { label: 'Jeep (SUV)', value: 'Jeep' }, { label: 'Bike', value: 'Bike' },
   { label: 'Bus', value: 'Bus' }, { label: 'Lorry', value: 'Lorry' },
-  { label: 'Three Wheel', value: 'Three Wheel' },
+  { label: 'Three Wheel', value: 'Three Wheel' }, { label: 'Other', value: 'Other' },
 ];
 
 const types = [

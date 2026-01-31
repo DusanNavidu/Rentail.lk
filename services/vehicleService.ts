@@ -142,23 +142,17 @@ export const addVehicle = async (
 };
 
 export const getAllVehicles = async () => {
-  const user = auth.currentUser;
-  if (!user) throw new Error("User not authenticated.");
-
-  const q = query(
-    vehiclesCollection,
-    where("userId", "==", user.uid),
-    orderBy("createdAt", "desc")
-  );
-
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((docSnap) => {
-    const data = docSnap.data();
-    return {
+  try {
+    const q = query(vehiclesCollection, orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((docSnap) => ({
       id: docSnap.id,
-      ...data,
-    };
-  });
+      ...docSnap.data(),
+    }));
+  } catch (error) {
+    console.error("Error fetching vehicles:", error);
+    return [];
+  }
 };
 
 export const deleteVehicle = async (id: string) => {
