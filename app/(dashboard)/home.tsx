@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import * as Location from 'expo-location'
 import { getAllVehicles } from '@/services/vehicleService'
-import { useLoader } from '@/hooks/useLoader'
+// import { useLoader } from '@/hooks/useLoader'
 import { useContext } from 'react';
 import { AuthContext } from '@/context/AuthContext';
 
@@ -149,7 +149,7 @@ const Home = () => {
         className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mr-4 mb-4"
         style={{ width: width }}
     >
-        <Image source={{ uri: item.imageUrl }} className="w-full h-32 bg-gray-200" resizeMode="cover" />
+        <Image source={{ uri: item.imageUrl }} className="w-full h-40 bg-gray-200" resizeMode="cover" />
         <View className="p-3">
             <View className="flex-row justify-between items-center mb-1">
                 <Text className="text-[10px] text-gray-500 font-bold bg-gray-100 px-2 py-1 rounded uppercase">{item.vehicleBrand}</Text>
@@ -224,16 +224,16 @@ const Home = () => {
 
         {/* CATEGORIES BAR */}
         <View className='mt-6'>
-            <FlatList horizontal data={CATEGORIES} keyExtractor={i => i.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, gap: 15 }}
-                renderItem={({ item }) => (
-                    <TouchableOpacity onPress={() => setSelectedCategory(item.id)} className="items-center">
-                        <View className={`w-14 h-14 rounded-2xl items-center justify-center mb-2 ${selectedCategory === item.id ? 'bg-black' : 'bg-gray-100'}`}>
-                            {item.id === 'Jeep' ? <FontAwesome5 name="shuttle-van" size={20} color={selectedCategory === item.id ? 'white' : 'gray'} /> : <Ionicons name={item.icon as any} size={24} color={selectedCategory === item.id ? 'white' : 'gray'} />}
-                        </View>
-                        <Text className={`text-xs font-medium ${selectedCategory === item.id ? 'text-black' : 'text-gray-500'}`}>{item.name}</Text>
-                    </TouchableOpacity>
-                )}
-            />
+          <FlatList horizontal data={CATEGORIES} keyExtractor={i => i.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, gap: 15 }}
+            renderItem={({ item }) => (
+              <TouchableOpacity onPress={() => setSelectedCategory(item.id)} className="items-center">
+                <View className={`w-14 h-14 rounded-2xl items-center justify-center mb-2 ${selectedCategory === item.id ? 'bg-black' : 'bg-gray-100'}`}>
+                  {item.id === 'Jeep' ? <FontAwesome5 name="shuttle-van" size={20} color={selectedCategory === item.id ? 'white' : 'gray'} /> : <Ionicons name={item.icon as any} size={24} color={selectedCategory === item.id ? 'white' : 'gray'} />}
+                </View>
+                <Text className={`text-xs font-medium ${selectedCategory === item.id ? 'text-black' : 'text-gray-500'}`}>{item.name}</Text>
+              </TouchableOpacity>
+            )}
+          />
         </View>
 
         {/* LOADING & CONTENT */}
