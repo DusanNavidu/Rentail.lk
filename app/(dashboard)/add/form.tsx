@@ -499,7 +499,7 @@ const VehicleForm = () => {
             placeholder="Select Brand" 
             searchPlaceholder="Search..." 
             value={vehicleBrand} 
-            onChange={handleBrandChange} // ✅ Use the combined handler here
+            onChange={handleBrandChange}
         />
 
         <Text className="label mt-4">Model</Text>
