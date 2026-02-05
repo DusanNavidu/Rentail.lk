@@ -5,6 +5,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { LoaderProvider } from "@/context/LoaderContext"
 import { AuthProvider } from "@/context/AuthContext"
 import Toast from 'react-native-toast-message'
+import { ThemeProvider } from "@/context/ThemeContext"
 
 const RootLayout = () => {
   const insets = useSafeAreaInsets()
@@ -12,10 +13,12 @@ const RootLayout = () => {
   return (
     <LoaderProvider>
       <AuthProvider>
-        <View className="flex-1" style={{ marginTop: insets.top }}>
-          <Slot />
-        </View>
-        <Toast />
+        <ThemeProvider>
+            <View style={{ flex: 1, marginTop: insets.top }}>
+              <Slot />
+            </View>
+            <Toast />
+        </ThemeProvider>
       </AuthProvider>
     </LoaderProvider>
   )
