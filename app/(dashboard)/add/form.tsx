@@ -85,7 +85,6 @@ const modelsByBrand: { [key: string]: { label: string; value: string }[] } = {
   TVS: [
     { label: 'King', value: 'King' }, { label: 'Apache', value: 'Apache' }, { label: 'Scooty Pep', value: 'Scooty Pep' }, { label: 'Ntorq', value: 'Ntorq' }
   ],
-  // ... අවශ්‍ය නම් තව Brands එකතු කරන්න
   Other: [{ label: 'Other', value: 'Other' }]
 };
 
