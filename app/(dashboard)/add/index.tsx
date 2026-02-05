@@ -130,7 +130,9 @@ const VehicleList = () => {
         onPress={() => router.push("/add/form")} 
         className={`rounded-[20px] shadow-xl absolute bottom-[130px] right-6 w-24 h-10 justify-center items-center z-50 border-2 ${isDark ? 'bg-white border-black' : 'bg-black border-white'}`}
       >
-        <Text className="font-bold text-lg ${isDark ? 'border border-gray-200' : 'border border-gray-700'}`">Add +</Text>
+        <Text className={`font-bold text-lg ${isDark ? 'text-black' : 'text-white'}`}>
+          Add +
+        </Text>
       </TouchableOpacity>
     </View>
   );
