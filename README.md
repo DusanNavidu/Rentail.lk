@@ -16,7 +16,13 @@
     <b>Rentail.lk</b> connects vehicle owners with renters seamlessly. Whether it's a car, bike, van, or lorry, find the perfect ride or earn passive income by listing your vehicle.
   </p>
 
-  [Report Bug](https://github.com/DusanNavidu/Rentail.lk/issues) • [Request Feature](https://github.com/DusanNavidu/Rentail.lk/issues)
+  <a href="https://youtu.be/cB_kl0bjUes">
+    <img src="https://img.shields.io/badge/🎥_Watch_Demo_Video-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="Watch Demo Video" />
+  </a>
+  <br/>
+  <br/>
+
+  [View Repo](https://github.com/DusanNavidu/Rentail.lk) • [Report Bug](https://github.com/DusanNavidu/Rentail.lk/issues) • [Request Feature](https://github.com/DusanNavidu/Rentail.lk/issues)
 
 </div>
 
@@ -28,15 +34,13 @@
 - [🛠️ Tech Stack](#️-tech-stack)
 - [🚀 Installation & Setup](#-installation--setup)
 - [⚙️ Configuration](#️-configuration)
-- [📂 Project Structure](#-project-structure)
-- [🗺️ Roadmap](#️-roadmap)
-- [🤝 Contributing](#-contributing)
 - [📞 Contact](#-contact)
 
 ---
 
 ## 📸 App Previews
 
+### 📱 Core User Experience
 <div align="center">
   <table>
     <tr>
@@ -45,19 +49,51 @@
       <td align="center"><b>📅 Booking Flow</b></td>
     </tr>
     <tr>
-      <td><img src="./assets/screenshots/home.png" width="250" /></td>
-      <td><img src="./assets/screenshots/details.png" width="250" /></td>
-      <td><img src="./assets/screenshots/booking.png" width="250" /></td>
+      <td><img src="./assets/readMe_image/home.jpeg" width="250" /></td>
+      <td><img src="./assets/readMe_image/vehicle details.jpeg" width="250" /></td>
+      <td><img src="./assets/readMe_image/booking and booking requests.jpeg" width="250" /></td>
     </tr>
+  </table>
+</div>
+
+### 🔥 Key Features
+<div align="center">
+  <table>
     <tr>
-      <td align="center"><b>➕ Add Vehicle</b></td>
-      <td align="center"><b>📊 Dashboard</b></td>
+      <td align="center"><b>💬 Chat & Voice Call</b></td>
+      <td align="center"><b>🚗 My Garage</b></td>
       <td align="center"><b>🌙 Dark Mode</b></td>
     </tr>
     <tr>
-      <td><img src="./assets/screenshots/add.png" width="250" /></td>
-      <td><img src="./assets/screenshots/dashboard.png" width="250" /></td>
-      <td><img src="./assets/screenshots/darkmode.png" width="250" /></td>
+      <td><img src="./assets/readMe_image/chat inbox.jpeg" width="250" /></td>
+      <td><img src="./assets/readMe_image/my garage.jpeg" width="250" /></td>
+      <td><img src="./assets/readMe_image/profile and dark mode.jpeg" width="250" /></td>
+    </tr>
+  </table>
+</div>
+
+### ➕ Add Vehicle Process (For Owners)
+<div align="center">
+  <table>
+    <tr>
+      <td align="center"><b>1. Add Photos</b></td>
+      <td align="center"><b>2. Vehicle Info</b></td>
+      <td align="center"><b>3. Owner Info</b></td>
+    </tr>
+    <tr>
+      <td><img src="./assets/readMe_image/add vehicle add image.png" width="250" /></td>
+      <td><img src="./assets/readMe_image/add vehicle add vehicle details.png" width="250" /></td>
+      <td><img src="./assets/readMe_image/add vehicle add user details.png" width="250" /></td>
+    </tr>
+    <tr>
+      <td align="center"><b>4. Extra Details</b></td>
+      <td align="center"><b>5. Set Location</b></td>
+      <td align="center"><b>✅ Completed</b></td>
+    </tr>
+    <tr>
+      <td><img src="./assets/readMe_image/add vehicle add vehicle details extra.png" width="250" /></td>
+      <td><img src="./assets/readMe_image/add vehicle add loaction.png" width="250" /></td>
+      <td><h3 align="center">Ready to Rent! 🚀</h3></td>
     </tr>
   </table>
 </div>
@@ -71,7 +107,7 @@
 - **🔍 Smart Search:** Filter by Brand (Toyota, Nissan, etc.), Price, and Location.
 - **📅 Easy Booking:** Real-time availability check and price calculation based on dates.
 - **📍 Map View:** View vehicle pick-up locations directly on an interactive map.
-- **📜 History:** Track active, pending, and completed bookings.
+- **💬 Real-Time Chat:** Voice notes, Image sharing, and In-app calling support.
 
 ### 🚘 For Vehicle Owners
 - **📝 Easy Listing:** 4-step guided form to add vehicles with photos and specs.
@@ -80,7 +116,7 @@
 - **🔄 Availability Control:** Update vehicle status and details anytime.
 
 ### ⚙️ System Highlights
-- **🔐 Secure Auth:** Powered by Firebase Authentication (Email/Password).
+- **🔐 Secure Auth:** Powered by Firebase Authentication (Email/Password & Auto-Login).
 - **🌗 Theme Support:** Seamless Dark and Light mode switching.
 - **📱 Responsive UI:** Optimized for both Android and iOS devices.
 
@@ -95,9 +131,9 @@
 | **Navigation** | Expo Router (File-based routing) |
 | **Backend** | Firebase Firestore (NoSQL DB) |
 | **Authentication** | Firebase Auth |
-| **Storage** | Cloudinary (Image Hosting) |
+| **Storage** | Cloudinary (Image/Audio Hosting) |
 | **Maps** | React Native Maps, Expo Location |
-| **UI Components** | React Native Element Dropdown, Lucide Icons |
+| **Media** | Expo AV (Voice), Expo Image Picker |
 
 ---
 
@@ -134,19 +170,14 @@ Follow these steps to get a local copy up and running.
 
 ## ⚙️ Configuration
 
-To make the app work, you need to configure **Firebase**.
+To make the app work, you need to configure **Firebase** and **Cloudinary**.
 
 1.  Go to [Firebase Console](https://console.firebase.google.com/).
 2.  Create a new project and add a Web App.
-3.  Create a file named `firebase.ts` inside the `services/` folder.
-4.  Paste your credentials:
+3.  Update the `services/firebase.ts` file with your credentials.
 
 ```typescript
 // services/firebase.ts
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
   authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -155,7 +186,3 @@ const firebaseConfig = {
   messagingSenderId: "YOUR_SENDER_ID",
   appId: "YOUR_APP_ID"
 };
-
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
