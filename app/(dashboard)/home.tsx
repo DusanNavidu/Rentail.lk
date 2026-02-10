@@ -132,15 +132,34 @@ const Home = () => {
     <SafeAreaView className={`flex-1 ${bgMain}`}>
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={iconColor} />}>
         
-        {/* HEADER */}
         <View className='px-6 flex flex-row mt-4 justify-between items-center'>
+          {/* Logo Section */}
           <View className='flex flex-row items-center gap-2'>
-            <Image source={require("../../assets/images/icon.png")} className={`w-10 h-10 bg-white rounded-full p-4 border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`} resizeMode="contain" />
-            <Text className={`text-2xl font-extrabold tracking-tight ${textMain}`}>Rentail<Text className="text-red-600">.</Text>lk</Text>
+            <Image 
+              source={require("../../assets/images/icon.png")} 
+              className={`w-10 h-10 bg-white rounded-full p-4 border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`} 
+              resizeMode="contain" 
+            />
+            <Text className={`text-2xl font-extrabold tracking-tight ${textMain}`}>
+              Rentail<Text className="text-red-600">.</Text>lk
+            </Text>
           </View>
-          <TouchableOpacity className={`p-2 rounded-full border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
-             <Ionicons name="notifications-outline" size={24} color={iconColor} />
-          </TouchableOpacity>
+
+          {/* Right Side Icons (Chat & Notifications) */}
+          <View className="flex-row gap-3">
+            {/* ✅ Chat Button (New) */}
+            <TouchableOpacity 
+              onPress={() => router.push("/chat/index")} 
+              className={`p-2 rounded-full border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}
+            >
+               <Ionicons name="chatbubble-ellipses-outline" size={24} color={iconColor} />
+            </TouchableOpacity>
+
+            {/* Notification Button (Existing) */}
+            <TouchableOpacity className={`p-2 rounded-full border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+               <Ionicons name="notifications-outline" size={24} color={iconColor} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View className='px-6 mt-6 flex-row justify-between items-center'>

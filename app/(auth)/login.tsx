@@ -44,7 +44,7 @@ const Login = () => {
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     webClientId: "636379772271-q17jgdq3o1eree9e7uvtf97k47lv06t8.apps.googleusercontent.com",
-    androidClientId: "636379772271-q17jgdq3o1eree9e7uvtf97k47lv06t8.apps.googleusercontent.com",
+    androidClientId: "636379772271-hq6t9474r6nfo05els0p7m4vkeo2he1j.apps.googleusercontent.com",
   });
 
   useEffect(() => {
