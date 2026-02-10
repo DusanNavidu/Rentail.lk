@@ -6,14 +6,16 @@ import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { Ionicons, MaterialIcons, FontAwesome5, Entypo, Feather } from "@expo/vector-icons";
 import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
-import { doc, onSnapshot, updateDoc } from "firebase/firestore"; // Firestore imports
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 
 import { auth, db } from "@/services/firebase";
-import { initializeChat, sendMessage, subscribeToMessages, getUserDetails } from "@/services/chatService";
-import { uploadToCloudinary } from "@/services/chatService"; 
+import { 
+    initializeChat, sendMessage, subscribeToMessages, getUserDetails, uploadToCloudinary, 
+    startVoiceCall, endVoiceCall, listenForIncomingCalls, sendCallLog 
+} from "@/services/chatService";
 import { ThemeContext } from "@/context/ThemeContext";
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 // --- Helper: Format Time ---
 const formatDuration = (millis: number | null) => {
@@ -23,7 +25,7 @@ const formatDuration = (millis: number | null) => {
     return `${minutes}:${Number(seconds) < 10 ? '0' : ''}${seconds}`;
 };
 
-// --- 🎧 Single Play Audio Component ---
+// --- 🎧 Audio Player Component ---
 const AudioMessage = ({ uri, isMe, isDark }: { uri: string, isMe: boolean, isDark: boolean }) => {
     const [sound, setSound] = useState<Audio.Sound | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -38,7 +40,7 @@ const AudioMessage = ({ uri, isMe, isDark }: { uri: string, isMe: boolean, isDar
             } else {
                 const { sound: newSound, status } = await Audio.Sound.createAsync(
                     { uri },
-                    { shouldPlay: true, isLooping: false } // Loop නවත්තන්න isLooping: false
+                    { shouldPlay: true, isLooping: false } // ✅ Loop නොවී එක පාරක් play වෙන්න
                 );
                 setSound(newSound);
                 setIsPlaying(true);
@@ -46,12 +48,12 @@ const AudioMessage = ({ uri, isMe, isDark }: { uri: string, isMe: boolean, isDar
 
                 newSound.setOnPlaybackStatusUpdate((status) => {
                     if (status.isLoaded) {
-                        setPosition(status.positionMillis);
+                        setPosition(status.positionMillis || 0);
                         setDuration(status.durationMillis || 0);
                         if (status.didJustFinish) {
                             setIsPlaying(false);
-                            setPosition(status.durationMillis); // ඉවර වුනාම අගට යන්න
-                            newSound.stopAsync(); // Stop කරන්න
+                            setPosition(status.durationMillis || 0); 
+                            newSound.stopAsync(); // ඉවර වුනාම නවතින්න
                         }
                     }
                 });
@@ -81,9 +83,6 @@ const AudioMessage = ({ uri, isMe, isDark }: { uri: string, isMe: boolean, isDar
                 <View style={{ height: 3, backgroundColor: trackColor, borderRadius: 2, width: '100%' }}>
                     <View style={{ width: `${progressPercent}%`, height: 3, backgroundColor: progressColor, borderRadius: 2 }} />
                 </View>
-                <View style={{ position: 'absolute', left: `${progressPercent}%`, marginLeft: -6, top: -5 }}>
-                     <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: progressColor }} />
-                </View>
                 <Text style={{ fontSize: 10, color: iconColor, marginTop: 4 }}>
                     {isPlaying ? formatDuration(position) : formatDuration(duration || 0)}
                 </Text>
@@ -95,6 +94,7 @@ const AudioMessage = ({ uri, isMe, isDark }: { uri: string, isMe: boolean, isDar
     );
 };
 
+// --- 💬 Main Chat Screen ---
 const Conversation = () => {
   const { receiverId, userName } = useLocalSearchParams();
   const router = useRouter();
@@ -106,7 +106,7 @@ const Conversation = () => {
   const [inputText, setInputText] = useState("");
   const [chatId, setChatId] = useState<string | null>(null);
   const [receiverData, setReceiverData] = useState<any>(null);
-  const [isReceiverOnline, setIsReceiverOnline] = useState(false); // Online Status
+  const [isReceiverOnline, setIsReceiverOnline] = useState(false);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   
@@ -115,13 +115,14 @@ const Conversation = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
-  // Call State
-  const [isCalling, setIsCalling] = useState(false);
+  // Call States
+  const [isCalling, setIsCalling] = useState(false); // Outgoing
+  const [incomingCall, setIncomingCall] = useState<any>(null); // Incoming
 
   const { theme } = useContext(ThemeContext);
   const isDark = theme === 'dark';
   
-  // --- Colors ---
+  // WhatsApp Colors
   const headerColor = isDark ? "#1f2c34" : "#008069";
   const bgWallpaper = isDark ? "#0b141a" : "#efe7dd"; 
   const inputBg = isDark ? "#1f2c34" : "#ffffff";
@@ -130,11 +131,10 @@ const Conversation = () => {
   const textColor = isDark ? "#e9edef" : "#111b21";
   const subTextColor = isDark ? "#8696a0" : "#667781";
 
-  // 1. Listen for Receiver's Online Status
+  // 1. Receiver Online Status Listener
   useEffect(() => {
     if (receiverId) {
-        const userDocRef = doc(db, "users", receiverId as string);
-        const unsubscribe = onSnapshot(userDocRef, (doc) => {
+        const unsubscribe = onSnapshot(doc(db, "users", receiverId as string), (doc) => {
             if (doc.exists()) {
                 setReceiverData(doc.data());
                 setIsReceiverOnline(doc.data()?.isOnline || false);
@@ -144,35 +144,38 @@ const Conversation = () => {
     }
   }, [receiverId]);
 
-  // 2. Set My Online Status
+  // 2. Chat Init, My Online Status & Incoming Calls
   useEffect(() => {
+      const init = async () => {
+        if (currentUser && receiverId) {
+            const id = await initializeChat(currentUser.uid, receiverId as string);
+            setChatId(id);
+            setLoading(false);
+            
+            // Set Me Online
+            updateDoc(doc(db, "users", currentUser.uid), { isOnline: true });
+        }
+      };
+      init();
+
+      // App State Change (Set Offline when app closes)
       if (currentUser) {
-          const myUserRef = doc(db, "users", currentUser.uid);
-          updateDoc(myUserRef, { isOnline: true });
-          
           const subscription = AppState.addEventListener("change", (nextAppState) => {
-              if (nextAppState === "active") {
-                  updateDoc(myUserRef, { isOnline: true });
-              } else {
-                  updateDoc(myUserRef, { isOnline: false });
-              }
+              const status = nextAppState === "active";
+              updateDoc(doc(db, "users", currentUser.uid), { isOnline: status });
           });
+
+          // Incoming Call Listener
+          const unsubscribeCall = listenForIncomingCalls(currentUser.uid, (call) => {
+              setIncomingCall(call);
+          });
+
           return () => {
-              updateDoc(myUserRef, { isOnline: false });
+              updateDoc(doc(db, "users", currentUser.uid), { isOnline: false });
               subscription.remove();
+              unsubscribeCall();
           };
       }
-  }, []);
-
-  useEffect(() => {
-    const setupChat = async () => {
-      if (currentUser && receiverId) {
-        const id = await initializeChat(currentUser.uid, receiverId as string);
-        setChatId(id);
-        setLoading(false);
-      }
-    };
-    setupChat();
   }, [currentUser, receiverId]);
 
   useLayoutEffect(() => {
@@ -183,26 +186,24 @@ const Conversation = () => {
     return () => unsubscribe();
   }, [chatId]);
 
+  // --- Handlers ---
   const handleSendText = async () => {
     if (inputText.trim() === "" || !chatId || !currentUser) return;
     const textToSend = inputText;
     setInputText(""); 
-    try { await sendMessage(chatId, textToSend, currentUser.uid, 'text'); } 
-    catch (error) { console.error(error); }
+    try { await sendMessage(chatId, textToSend, currentUser.uid, 'text'); } catch(e){}
   };
 
   const handleSendImage = async () => {
     try {
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.5,
-        });
+        const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.5 });
         if (!result.canceled && chatId && currentUser) {
             setUploading(true);
             const imageUrl = await uploadToCloudinary(result.assets[0].uri);
             if (imageUrl) await sendMessage(chatId, imageUrl, currentUser.uid, 'image');
             setUploading(false);
         }
-    } catch (error) { setUploading(false); }
+    } catch (e) { setUploading(false); }
   };
 
   const startRecording = async () => {
@@ -214,7 +215,7 @@ const Conversation = () => {
         setRecording(recording);
         setIsRecording(true);
       }
-    } catch (err) { console.error(err); }
+    } catch (e) {}
   };
 
   const stopRecordingAndSend = async () => {
@@ -231,43 +232,66 @@ const Conversation = () => {
     }
   };
 
-  // ✅ In-App Voice Call Logic (Simulation)
-  const startCall = () => {
+  // --- Call Logic ---
+  const startCall = async () => {
+      if (!currentUser || !receiverId) return;
       setIsCalling(true);
-      // In a real app, you would initialize WebRTC here
+      // Start call signal
+      await startVoiceCall(currentUser.uid, receiverId as string, currentUser.displayName || "User", currentUser.photoURL || "");
   };
 
-  const endCall = () => {
+  const endCall = async () => {
       setIsCalling(false);
+      setIncomingCall(null);
+      if (currentUser && receiverId && chatId) {
+          await endVoiceCall(currentUser.uid, receiverId as string);
+          // Log missed call
+          await sendCallLog(chatId, currentUser.uid, "Missed Call");
+      }
   };
 
+  const answerCall = () => {
+      setIncomingCall(null); // Close modal
+      if(chatId && currentUser) {
+          // Log answered call
+          sendCallLog(chatId, currentUser.uid, "Voice Call");
+      }
+  };
+
+  // --- Message Renderer ---
   const renderMessage = ({ item }: { item: any }) => {
     const isMe = item.senderId === currentUser?.uid;
     const isImage = item.type === 'image';
     const isAudio = item.type === 'audio';
+    const isCall = item.type === 'call';
+
+    // ✅ Call Log Message (Center)
+    if (isCall) {
+        return (
+            <View className="items-center my-2">
+                <View className={`px-4 py-1 rounded-full bg-gray-400/20 flex-row items-center gap-2`}>
+                    <Ionicons name="call" size={14} color={isDark ? "white" : "black"} />
+                    <Text className={`${isDark ? "text-white" : "text-black"} text-xs font-bold`}>{item.text}</Text>
+                    <Text className="text-gray-500 text-[10px]">{new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+                </View>
+            </View>
+        );
+    }
 
     return (
       <View className={`flex-row ${isMe ? "justify-end" : "justify-start"} mb-1 px-2`}>
         <View 
             style={{ 
                 backgroundColor: isMe ? myMsgBg : otherMsgBg,
-                borderRadius: 12,
-                borderTopRightRadius: isMe ? 0 : 12,
-                borderTopLeftRadius: isMe ? 12 : 0,
-                padding: isImage ? 3 : 8, // Minimal padding for images
-                maxWidth: '85%',
-                minWidth: isAudio ? 180 : 'auto',
+                borderRadius: 12, borderTopRightRadius: isMe ? 0 : 12, borderTopLeftRadius: isMe ? 12 : 0,
+                padding: isImage ? 3 : 8, maxWidth: '85%', minWidth: isAudio ? 180 : 'auto',
                 shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 1, elevation: 1
             }}
         >
           {isImage ? (
              <TouchableOpacity onPress={() => setSelectedImage(item.text)} activeOpacity={0.9}>
-                 <Image 
-                    source={{ uri: item.text }} 
-                    style={{ width: 240, height: 240, borderRadius: 8 }} // Bigger Image
-                    resizeMode="cover" 
-                 />
-                 {/* Timestamp Overlay for Image */}
+                 <Image source={{ uri: item.text }} style={{ width: 240, height: 240, borderRadius: 8 }} resizeMode="cover" />
+                 {/* Time Overlay */}
                  <View className="absolute bottom-1 right-2 bg-black/30 px-1 rounded flex-row items-center">
                     <Text style={{ color: 'white', fontSize: 10, marginRight: 2 }}>
                         {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -278,12 +302,9 @@ const Conversation = () => {
           ) : isAudio ? (
              <AudioMessage uri={item.text} isMe={isMe} isDark={isDark} />
           ) : (
-             <Text style={{ color: textColor, fontSize: 16, lineHeight: 22, paddingHorizontal: 4 }}>
-                {item.text}
-             </Text>
+             <Text style={{ color: textColor, fontSize: 16, lineHeight: 22, paddingHorizontal: 4 }}>{item.text}</Text>
           )}
 
-          {/* Timestamp for Text/Audio */}
           {!isImage && (
               <View className="flex-row justify-end items-center gap-1 mt-1">
                  <Text style={{ color: subTextColor, fontSize: 10 }}>
@@ -314,19 +335,13 @@ const Conversation = () => {
             </TouchableOpacity>
 
             <View className="flex-1 ml-2">
-                <Text className="font-bold text-white text-lg" numberOfLines={1}>
-                    {receiverData?.name || userName || "User"}
-                </Text>
-                {/* Online Status Check */}
-                <Text className="text-xs text-gray-200">
-                    {uploading ? "Sending..." : (isReceiverOnline ? "Online" : "Offline")}
-                </Text>
+                <Text className="font-bold text-white text-lg" numberOfLines={1}>{receiverData?.name || userName || "User"}</Text>
+                {/* Online Indicator */}
+                <Text className="text-xs text-gray-200">{uploading ? "Sending..." : (isReceiverOnline ? "Online" : "Offline")}</Text>
             </View>
 
             <View className="flex-row gap-5 mr-2">
-                <TouchableOpacity onPress={startCall}>
-                    <Ionicons name="call" size={22} color="white" />
-                </TouchableOpacity>
+                <TouchableOpacity onPress={startCall}><Ionicons name="call" size={22} color="white" /></TouchableOpacity>
                 <Entypo name="dots-three-vertical" size={18} color="white" />
             </View>
         </View>
@@ -335,70 +350,34 @@ const Conversation = () => {
       {/* --- Body --- */}
       <View style={{ flex: 1, backgroundColor: bgWallpaper }}>
           <KeyboardAvoidingView 
-            style={{ flex: 1 }}
+            style={{ flex: 1 }} 
             behavior={Platform.OS === "ios" ? "padding" : undefined} 
-            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0} 
+            keyboardVerticalOffset={0}
           >
             {loading ? (
-                <View className="flex-1 justify-center items-center">
-                    <ActivityIndicator size="large" color="#008069" />
-                </View>
+                <View className="flex-1 justify-center items-center"><ActivityIndicator size="large" color="#008069" /></View>
             ) : (
                 <>
                     <FlatList
-                        ref={flatListRef}
-                        data={messages}
-                        renderItem={renderMessage}
-                        keyExtractor={(item) => item._id}
-                        inverted
-                        contentContainerStyle={{ paddingVertical: 10, paddingBottom: 10 }}
+                        ref={flatListRef} data={messages} renderItem={renderMessage} keyExtractor={(item) => item._id}
+                        inverted contentContainerStyle={{ paddingVertical: 10, paddingBottom: 10 }}
                     />
-
-                    {/* --- Input Bar --- */}
+                    {/* Input Bar */}
                     <View style={{ flexDirection: 'row', alignItems: 'flex-end', padding: 6, paddingBottom: 10 }}>
-                        <View style={{ 
-                            flex: 1, flexDirection: 'row', alignItems: 'center', 
-                            backgroundColor: inputBg, borderRadius: 24, paddingHorizontal: 12, paddingVertical: 8, marginRight: 6, minHeight: 48, elevation: 1
-                        }}>
-                            <TouchableOpacity>
-                                <FontAwesome5 name="smile" size={24} color={subTextColor} />
-                            </TouchableOpacity>
-
+                        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: inputBg, borderRadius: 24, paddingHorizontal: 12, paddingVertical: 8, marginRight: 6, minHeight: 48, elevation: 1 }}>
+                            <TouchableOpacity><FontAwesome5 name="smile" size={24} color={subTextColor} /></TouchableOpacity>
                             <TextInput
                                 style={{ flex: 1, marginHorizontal: 10, color: textColor, fontSize: 16, maxHeight: 100 }}
-                                placeholder={isRecording ? "Recording..." : "Message"}
-                                placeholderTextColor={subTextColor}
-                                value={inputText}
-                                onChangeText={setInputText}
-                                multiline
-                                editable={!isRecording}
+                                placeholder={isRecording ? "Recording..." : "Message"} placeholderTextColor={subTextColor}
+                                value={inputText} onChangeText={setInputText} multiline editable={!isRecording}
                             />
-
                             <View className="flex-row gap-4">
-                                <TouchableOpacity onPress={handleSendImage}>
-                                    <Entypo name="attachment" size={20} color={subTextColor} />
-                                </TouchableOpacity>
-                                {!inputText && (
-                                    <TouchableOpacity onPress={handleSendImage}>
-                                        <Ionicons name="camera" size={24} color={subTextColor} />
-                                    </TouchableOpacity>
-                                )}
+                                <TouchableOpacity onPress={handleSendImage}><Entypo name="attachment" size={20} color={subTextColor} /></TouchableOpacity>
+                                {!inputText && <TouchableOpacity onPress={handleSendImage}><Ionicons name="camera" size={24} color={subTextColor} /></TouchableOpacity>}
                             </View>
                         </View>
-
-                        <TouchableOpacity 
-                            onPress={inputText ? handleSendText : (isRecording ? stopRecordingAndSend : startRecording)} 
-                            style={{ 
-                                width: 48, height: 48, borderRadius: 24, 
-                                backgroundColor: isRecording ? "#ef4444" : "#00a884",
-                                justifyContent: 'center', alignItems: 'center', elevation: 2
-                            }}
-                        >
-                            {inputText ? (
-                                <Ionicons name="send" size={20} color="white" style={{ marginLeft: 2 }} />
-                            ) : (
-                                <MaterialIcons name={isRecording ? "stop" : "mic"} size={24} color="white" />
-                            )}
+                        <TouchableOpacity onPress={inputText ? handleSendText : (isRecording ? stopRecordingAndSend : startRecording)} style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: isRecording ? "#ef4444" : "#00a884", justifyContent: 'center', alignItems: 'center', elevation: 2 }}>
+                            {inputText ? <Ionicons name="send" size={20} color="white" style={{ marginLeft: 2 }} /> : <MaterialIcons name={isRecording ? "stop" : "mic"} size={24} color="white" />}
                         </TouchableOpacity>
                     </View>
                 </>
@@ -406,52 +385,46 @@ const Conversation = () => {
           </KeyboardAvoidingView>
       </View>
 
-      {/* --- 🖼️ Full Screen Image Modal --- */}
+      {/* --- Image Modal (Full Screen) --- */}
       <Modal visible={!!selectedImage} transparent={true} animationType="fade" onRequestClose={() => setSelectedImage(null)}>
           <View style={{ flex: 1, backgroundColor: 'black', justifyContent: 'center', alignItems: 'center' }}>
-              <StatusBar hidden />
-              <TouchableOpacity 
-                  onPress={() => setSelectedImage(null)} 
-                  style={{ position: 'absolute', top: 40, left: 20, zIndex: 10, padding: 10 }}
-              >
-                  <Ionicons name="arrow-back" size={30} color="white" />
+              <TouchableOpacity onPress={() => setSelectedImage(null)} style={{ position: 'absolute', top: 40, left: 20, zIndex: 10, padding: 10 }}>
+                  <Ionicons name="close" size={30} color="white" />
               </TouchableOpacity>
-              
-              {selectedImage && (
-                  <Image 
-                      source={{ uri: selectedImage }} 
-                      style={{ width: width, height: '100%' }} 
-                      resizeMode="contain" 
-                  />
-              )}
+              {selectedImage && <Image source={{ uri: selectedImage }} style={{ width: width, height: '100%' }} resizeMode="contain" />}
           </View>
       </Modal>
 
-      {/* --- 📞 In-App Voice Call Screen (Simulation) --- */}
+      {/* --- 🟢 OUTGOING CALL SCREEN --- */}
       <Modal visible={isCalling} animationType="slide" onRequestClose={endCall}>
           <View style={{ flex: 1, backgroundColor: '#0f1c24', alignItems: 'center', paddingTop: 80 }}>
-              <StatusBar hidden={false} barStyle="light-content" />
-              
               <View className="items-center mb-10">
-                  <Image 
-                      source={receiverData?.photoUrl ? { uri: receiverData.photoUrl } : require("@/assets/images/icon.png")} 
-                      style={{ width: 100, height: 100, borderRadius: 50, marginBottom: 20 }} 
-                  />
+                  <Image source={receiverData?.photoUrl ? { uri: receiverData.photoUrl } : require("@/assets/images/icon.png")} style={{ width: 100, height: 100, borderRadius: 50, marginBottom: 20 }} />
                   <Text className="text-white text-3xl font-bold">{receiverData?.name || "User"}</Text>
                   <Text className="text-gray-400 text-lg mt-2">Calling...</Text>
               </View>
-
-              <View style={{ position: 'absolute', bottom: 50, width: '100%', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }}>
-                  <TouchableOpacity className="p-4 bg-gray-800 rounded-full">
-                      <Ionicons name="volume-high" size={30} color="white" />
-                  </TouchableOpacity>
-                  
+              <View style={{ position: 'absolute', bottom: 50, width: '100%', flexDirection: 'row', justifyContent: 'center' }}>
                   <TouchableOpacity onPress={endCall} className="p-6 bg-red-600 rounded-full elevation-5">
                       <MaterialIcons name="call-end" size={40} color="white" />
                   </TouchableOpacity>
+              </View>
+          </View>
+      </Modal>
 
-                  <TouchableOpacity className="p-4 bg-gray-800 rounded-full">
-                      <Ionicons name="mic-off" size={30} color="white" />
+      {/* --- 🔴 INCOMING CALL SCREEN --- */}
+      <Modal visible={!!incomingCall} animationType="slide" onRequestClose={() => {}}>
+          <View style={{ flex: 1, backgroundColor: '#0f1c24', alignItems: 'center', paddingTop: 80 }}>
+              <View className="items-center mb-10">
+                  <Image source={incomingCall?.callerPhoto ? { uri: incomingCall.callerPhoto } : require("@/assets/images/icon.png")} style={{ width: 100, height: 100, borderRadius: 50, marginBottom: 20 }} />
+                  <Text className="text-white text-3xl font-bold">{incomingCall?.callerName || "Unknown"}</Text>
+                  <Text className="text-gray-400 text-lg mt-2">Incoming Voice Call...</Text>
+              </View>
+              <View style={{ position: 'absolute', bottom: 80, width: '100%', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }}>
+                  <TouchableOpacity onPress={() => { endVoiceCall(incomingCall.callerId, currentUser!.uid); setIncomingCall(null); }} className="p-5 bg-red-600 rounded-full">
+                      <MaterialIcons name="call-end" size={35} color="white" />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={answerCall} className="p-5 bg-green-500 rounded-full">
+                      <MaterialIcons name="call" size={35} color="white" />
                   </TouchableOpacity>
               </View>
           </View>

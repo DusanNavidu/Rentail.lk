@@ -116,7 +116,7 @@ const Profile = () => {
       </TouchableOpacity>
 
       <Text className={`text-center mt-10 text-xs ${textSub}`}>Version 1.0.0</Text>
-
+      <View className="h-[120px]"></View>
     </ScrollView>
   );
 };
