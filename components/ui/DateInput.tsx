@@ -5,7 +5,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 
 interface DateInputProps {
     label: string;
-    value: string; // YYYY-MM-DD string
+    value: string; // Ensure this is always passed as a string (YYYY-MM-DD)
     onChange: (date: string) => void;
     iconColor?: string;
     isDark: boolean;
@@ -14,16 +14,17 @@ interface DateInputProps {
 const DateInput: React.FC<DateInputProps> = ({ label, value, onChange, iconColor = "#10b981", isDark }) => {
     const [show, setShow] = useState(false);
     
-    // Theme Colors
+    // Safely create Date object for the picker
+    const dateValue = value ? new Date(value) : new Date();
+
     const textMain = isDark ? "text-white" : "text-black";
     const textSub = isDark ? "text-gray-400" : "text-gray-500";
     const inputBg = isDark ? "bg-gray-800 border-gray-700" : "bg-gray-50 border-gray-200";
 
     const handleDateChange = (event: any, selectedDate?: Date) => {
-        // Android requires checking for 'set' action and closing modal
-        setShow(false);
-        
+        setShow(false); // Close picker first
         if (event.type === "set" && selectedDate) {
+            // Force YYYY-MM-DD format string
             const formattedDate = selectedDate.toISOString().split('T')[0];
             onChange(formattedDate);
         }
@@ -40,16 +41,16 @@ const DateInput: React.FC<DateInputProps> = ({ label, value, onChange, iconColor
             >
                 <Feather name="calendar" size={18} color={iconColor} />
                 
-                {/* Text Component එක ඇතුලෙම ලියන්න */}
+                {/* 🔴 CRITICAL FIX: Ensure 'value' is rendered as a string explicitly */}
                 <Text className={`flex-1 ml-3 ${value ? textMain : 'text-[#9ca3af]'}`}>
-                    {value ? value : "Select Date"}
+                    {value ? String(value) : "Select Date"}
                 </Text>
             </TouchableOpacity>
 
-            {/* Conditional Rendering එක ආරක්ෂිතව */}
+            {/* Render DatePicker only when show is true */}
             {show ? (
                 <DateTimePicker
-                    value={value ? new Date(value) : new Date()}
+                    value={dateValue}
                     mode="date"
                     display="default"
                     onChange={handleDateChange}

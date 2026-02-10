@@ -1,113 +1,136 @@
-import { View, Text, FlatList, ActivityIndicator, Image, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
 import React, { useEffect, useState, useContext, useCallback } from 'react';
-import { getUserBookings } from '@/services/bookingService';
+import { getUserBookings, getOwnerBookings } from '@/services/bookingService';
 import { ThemeContext } from '@/context/ThemeContext';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import BookingCard from '@/components/ui/BookingCard';
+import IncomingBookingCard from '@/components/ui/IncomingBookingCard';
 
 const BookingList = () => {
   const router = useRouter();
   const { theme } = useContext(ThemeContext);
   const isDark = theme === 'dark';
 
+  // --- States ---
+  const [activeTab, setActiveTab] = useState<'my_trips' | 'incoming'>('my_trips');
+  const [myBookings, setMyBookings] = useState<any[]>([]);
+  const [incomingBookings, setIncomingBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
   // --- Colors ---
   const bgMain = isDark ? "bg-gray-900" : "bg-gray-50";
   const textMain = isDark ? "text-white" : "text-black";
   const textSub = isDark ? "text-gray-400" : "text-gray-500";
-  const cardBg = isDark ? "bg-gray-800" : "bg-white";
 
-  const [bookings, setBookings] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const fetchBookings = async () => {
+  // --- Data Fetching ---
+  const fetchAllData = async () => {
     setLoading(true);
-    const data = await getUserBookings();
-    setBookings(data);
+    // Fetch both simultaneously
+    const [userData, ownerData] = await Promise.all([
+      getUserBookings(),   // My Trips
+      getOwnerBookings()   // My Car Bookings
+    ]);
+    
+    setMyBookings(userData);
+    setIncomingBookings(ownerData);
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchBookings();
+    fetchAllData();
   }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchBookings();
+    await fetchAllData();
     setRefreshing(false);
   }, []);
 
-  // Status Badge Helper
-  const getStatusColor = (status: string) => {
-    switch(status) {
-        case 'approved': return 'bg-green-500';
-        case 'rejected': return 'bg-red-500';
-        default: return 'bg-yellow-500';
-    }
-  };
+  // --- Tab Button Component ---
+  const TabButton = ({ title, id }: { title: string, id: 'my_trips' | 'incoming' }) => (
+    <TouchableOpacity
+      onPress={() => setActiveTab(id)}
+      className={`flex-1 py-3 items-center border-b-2 ${
+        activeTab === id 
+          ? 'border-emerald-500' 
+          : 'border-transparent'
+      }`}
+    >
+      <Text className={`font-bold ${
+        activeTab === id 
+          ? 'text-emerald-500' 
+          : textSub
+      }`}>
+        {title}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
-    <View className={`flex-1 ${bgMain} pt-12 px-4`}>
-        <View className="flex-row items-center justify-between mb-6">
-            <Text className={`text-2xl font-extrabold ${textMain}`}>My Bookings</Text>
-            <TouchableOpacity onPress={fetchBookings}>
-                <Ionicons name="refresh" size={24} color={isDark ? "white" : "black"} />
-            </TouchableOpacity>
-        </View>
+    <View className={`flex-1 ${bgMain} pt-12`}>
+      {/* Header */}
+      <View className="px-4 mb-2 flex-row justify-between items-center">
+        <Text className={`text-2xl font-extrabold ${textMain}`}>Bookings</Text>
+        <TouchableOpacity onPress={fetchAllData}>
+          <Ionicons name="refresh" size={24} color={isDark ? "white" : "black"} />
+        </TouchableOpacity>
+      </View>
 
+      {/* Tabs */}
+      <View className={`flex-row mb-4 border-b ${isDark ? 'border-gray-800' : 'border-gray-200'}`}>
+        <TabButton title="My Trips" id="my_trips" />
+        <TabButton title="My Car Requests" id="incoming" />
+      </View>
+
+      {/* Content */}
+      <View className="flex-1 px-4">
         {loading ? (
-            <ActivityIndicator size="large" color="#10b981" className="mt-10" />
-        ) : bookings.length === 0 ? (
-            <View className="flex-1 justify-center items-center">
-                <Text className={textSub}>No bookings found.</Text>
-                <TouchableOpacity onPress={() => router.push("/home")} className="mt-4">
-                    <Text className="text-emerald-500 font-bold">Find a car</Text>
-                </TouchableOpacity>
-            </View>
+          <ActivityIndicator size="large" color="#10b981" className="mt-10" />
         ) : (
-            <FlatList
-                data={bookings}
-                keyExtractor={item => item.id}
-                showsVerticalScrollIndicator={false}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-                contentContainerStyle={{ paddingBottom: 20 }}
-                renderItem={({ item }) => (
-                    <View className={`mb-4 rounded-2xl p-4 flex-row ${cardBg} shadow-sm`}>
-                        {/* Image */}
-                        <Image 
-                            source={{ uri: item.vehicleImage }} 
-                            className="w-20 h-20 rounded-xl bg-gray-300" 
-                            resizeMode="cover" 
-                        />
-                        
-                        {/* Details */}
-                        <View className="ml-4 flex-1 justify-between">
-                            <View>
-                                <View className="flex-row justify-between items-start">
-                                    <Text className={`font-bold text-lg ${textMain}`} numberOfLines={1}>
-                                        {item.vehicleBrand} {item.vehicleModel}
-                                    </Text>
-                                    <View className={`px-2 py-0.5 rounded-full ${getStatusColor(item.status)}`}>
-                                        <Text className="text-[10px] font-bold text-white uppercase">{item.status}</Text>
-                                    </View>
-                                </View>
-                                <Text className={`text-xs mt-1 ${textSub}`}>
-                                    {item.startDate}  ➔  {item.endDate}
-                                </Text>
-                            </View>
-                            
-                            <View className="flex-row justify-between items-end">
-                                <Text className="text-emerald-500 font-extrabold text-base">
-                                    Rs. {item.totalPrice}
-                                </Text>
-                            </View>
-                        </View>
-                    </View>
+          <FlatList
+            data={activeTab === 'my_trips' ? myBookings : incomingBookings}
+            keyExtractor={item => item.id}
+            showsVerticalScrollIndicator={false}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            contentContainerStyle={{ paddingBottom: 20 }}
+            ListEmptyComponent={() => (
+              <View className="flex-1 justify-center items-center mt-20">
+                <Text className={textSub}>
+                  {activeTab === 'my_trips' 
+                    ? "You haven't booked any cars yet." 
+                    : "No booking requests for your cars yet."}
+                </Text>
+                {activeTab === 'my_trips' && (
+                  <TouchableOpacity onPress={() => router.push("/home")} className="mt-4">
+                    <Text className="text-emerald-500 font-bold">Find a car</Text>
+                  </TouchableOpacity>
                 )}
-            />
+              </View>
+            )}
+            renderItem={({ item }) => (
+              activeTab === 'my_trips' ? (
+                // 1. My Trip Card (Simple View)
+                <BookingCard 
+                    item={item} 
+                    isDark={isDark} 
+                    onUpdate={fetchAllData} 
+                />
+              ) : (
+                // 2. Incoming Request Card (With Accept/Reject)
+                <IncomingBookingCard 
+                  item={item} 
+                  isDark={isDark} 
+                  onUpdate={fetchAllData} 
+                />
+              )
+            )}
+          />
         )}
+      </View>
     </View>
-  )
-}
+  );
+};
 
 export default BookingList;

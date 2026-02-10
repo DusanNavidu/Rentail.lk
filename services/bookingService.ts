@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, query, where, orderBy, doc, getDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, updateDoc, doc, deleteDoc, getDoc } from "firebase/firestore";
 import { db } from "./firebase"; 
 import { getAuth } from "firebase/auth";
 
@@ -12,60 +12,38 @@ export const createBooking = async (
   endDate: string,
   totalPrice: number
 ) => {
-  const user = auth.currentUser;
-  if (!user) throw new Error("User must be logged in to book.");
-
-  // --- 1. Prevent Self-Booking ---
-  if (vehicleDetails.userId === user.uid) { // userId is usually the owner's ID in vehicle doc
-    throw new Error("You cannot book your own vehicle.");
-  }
-
-  // --- 2. Prevent Past Dates ---
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Reset time to midnight for accurate comparison
   
-  const start = new Date(startDate);
-  if (start < today) {
-    throw new Error("Cannot book for a past date.");
-  }
-
-  const end = new Date(endDate);
-  if (end < start) {
-    throw new Error("End date cannot be before start date.");
+  const user = auth.currentUser;
+  if (!user) {
+      console.error("Service Error: User not logged in");
+      throw new Error("Please login to book.");
   }
 
   try {
-    const docRef = await addDoc(bookingsCollection, {
+    const bookingPayload = {
       vehicleId,
       vehicleBrand: vehicleDetails.vehicleBrand,
       vehicleModel: vehicleDetails.vehicleModel,
       vehicleImage: vehicleDetails.imageUrl,
-      
-      // Owner Info
-      ownerId: vehicleDetails.userId, // This should match the field name in your 'vehicles' collection (userId or ownerId)
-      ownerName: vehicleDetails.ownerName,
-      ownerContact: vehicleDetails.ownerContact,
-
-      // Customer Info
+      ownerId: vehicleDetails.userId || "unknown",
       customerId: user.uid,
       customerName: user.displayName || "Customer",
       customerEmail: user.email,
-      
-      // Booking Details
       startDate,
       endDate,
       totalPrice,
-      status: "pending", // pending, approved, rejected, completed
+      status: "pending",
       createdAt: new Date().toISOString(),
-    });
+    };
+
+
+    const docRef = await addDoc(bookingsCollection, bookingPayload);
     
-    console.log("Booking created successfully with ID: ", docRef.id);
     return docRef.id;
 
   } catch (error: any) {
-    console.error("Error creating booking: ", error);
-    // Re-throw the error so the UI can catch and display it
-    throw new Error(error.message || "Failed to create booking.");
+    console.error("Service Error: Create booking failed:", error);
+    throw new Error("Booking failed");
   }
 };
 
@@ -74,35 +52,103 @@ export const getUserBookings = async () => {
   if (!user) return [];
 
   try {
-    // Get bookings where the current user is the CUSTOMER
     const q = query(
       bookingsCollection, 
-      where("customerId", "==", user.uid),
-      orderBy("createdAt", "desc")
+      where("customerId", "==", user.uid)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+
+    return snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   } catch (error) {
-    console.error("Error fetching user bookings: ", error);
+    console.error("Service Error: Fetching bookings failed:", error);
     return [];
   }
 };
 
-// Optional: Get bookings for OWNER (To see who booked their cars)
+export const updateBookingStatus = async (bookingId: string, status: 'approved' | 'rejected') => {
+  try {
+    const bookingRef = doc(db, "bookings", bookingId);
+    await updateDoc(bookingRef, {
+      status: status
+    });
+    return true;
+  } catch (error) {
+    console.error("Error updating booking status:", error);
+    throw error;
+  }
+};
+
 export const getOwnerBookings = async () => {
-    const user = auth.currentUser;
-    if (!user) return [];
-  
-    try {
-      const q = query(
-        bookingsCollection, 
-        where("ownerId", "==", user.uid),
-        orderBy("createdAt", "desc")
-      );
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    } catch (error) {
-      console.error("Error fetching owner bookings: ", error);
-      return [];
+  const user = auth.currentUser;
+  if (!user) return [];
+
+  try {
+    const q = query(
+      bookingsCollection, 
+      where("ownerId", "==", user.uid)
+    );
+    
+    const snapshot = await getDocs(q);
+    
+    return snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        
+  } catch (error) {
+    console.error("Service Error: Fetching owner bookings failed:", error);
+    return [];
+  }
+};
+
+export const deleteBooking = async (id: string) => {
+  try {
+    const bookingRef = doc(db, "bookings", id);
+    await deleteDoc(bookingRef);
+    console.log("Booking deleted:", id);
+  } catch (error) {
+    console.error("Error deleting booking:", error);
+    throw error;
+  }
+};
+
+export const getBookingById = async (bookingId: string) => {
+  try {
+    const docRef = doc(db, "bookings", bookingId);
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
+    } else {
+      throw new Error("Booking not found");
     }
-  };
+  } catch (error) {
+    console.error("Error fetching booking:", error);
+    throw error;
+  }
+};
+
+export const updateBooking = async (
+  bookingId: string, 
+  startDate: string, 
+  endDate: string, 
+  totalPrice: number
+) => {
+  try {
+    const bookingRef = doc(db, "bookings", bookingId);
+    
+    await updateDoc(bookingRef, {
+      startDate,
+      endDate,
+      totalPrice,
+      updatedAt: new Date().toISOString()
+    });
+    
+    return true;
+  } catch (error) {
+    console.error("Error updating booking:", error);
+    throw error;
+  }
+};

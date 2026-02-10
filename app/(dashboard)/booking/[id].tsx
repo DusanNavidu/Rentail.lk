@@ -1,95 +1,129 @@
-import { View, Text, Image, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
-import React, { useEffect, useState, useContext } from 'react';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { getVehicleById } from '@/services/vehicleService';
-import { createBooking } from '@/services/bookingService';
-import { ThemeContext } from '@/context/ThemeContext';
-import DateInput from '@/components/ui/DateInput';
+import React, { useContext, useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Text,
+  TouchableOpacity,
+  View,
+  ScrollView,
+  Image,
+  StatusBar
+} from "react-native";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { Ionicons } from "@expo/vector-icons"; 
+import DateInput from "@/components/ui/DateInput";
+import { ThemeContext } from "@/context/ThemeContext";
+import { createBooking, getBookingById, updateBooking } from "@/services/bookingService"; // Updated imports
+import { getVehicleById } from "@/services/vehicleService";
 
 const BookingForm = () => {
-  const { id } = useLocalSearchParams();
   const router = useRouter();
-  const { theme } = useContext(ThemeContext);
-  const isDark = theme === 'dark';
+  
+  // vehicle ID (id) සහ bookingId ලබා ගැනීම
+  const { id, bookingId } = useLocalSearchParams();
 
-  // --- Colors ---
-  const bgMain = isDark ? "bg-gray-900" : "bg-white";
-  const textMain = isDark ? "text-white" : "text-black";
-  const textSub = isDark ? "text-gray-400" : "text-gray-500";
-  const inputBg = isDark ? "bg-gray-800 border-gray-700" : "bg-gray-50 border-gray-200";
-
-  // --- State ---
   const [vehicle, setVehicle] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // Date States
-  const [startDate, setStartDate] = useState(''); 
-  const [endDate, setEndDate] = useState('');
-  
-  // Calculation States
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
   const [totalPrice, setTotalPrice] = useState(0);
   const [days, setDays] = useState(0);
 
-  // --- 1. Fetch Vehicle Data ---
+  const themeContext = useContext(ThemeContext);
+  const isDark = (themeContext as any)?.theme === 'dark'; 
+
+  // --- Colors ---
+  const bgMain = isDark ? "bg-gray-900" : "bg-white";
+  const textMain = isDark ? "text-white" : "text-gray-900";
+  const textSub = isDark ? "text-gray-400" : "text-gray-500";
+  const cardBg = isDark ? "bg-gray-800" : "bg-gray-50";
+  const borderColor = isDark ? "border-gray-700" : "border-gray-200";
+
+  // 1. Fetch Data (Vehicle & Booking if Edit Mode)
   useEffect(() => {
-    fetchVehicleDetails();
-  }, [id]);
-
-  const fetchVehicleDetails = async () => {
-    try {
-        if (typeof id === 'string') {
-            const data = await getVehicleById(id);
-            setVehicle(data);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // A. Fetch Vehicle Details
+        if (id && typeof id === 'string') {
+            const vData = await getVehicleById(id);
+            setVehicle(vData);
         }
-    } catch (error) {
-        Alert.alert("Error", "Vehicle not found");
-        router.back();
-    } finally {
-        setLoading(false);
-    }
-  };
 
-  // --- 2. Calculate Totals Logic ---
+        // B. Fetch Booking Details (If Editing)
+        if (bookingId && typeof bookingId === 'string') {
+            const bData: any = await getBookingById(bookingId);
+            // Pre-fill Dates
+            setStartDate(bData.startDate);
+            setEndDate(bData.endDate);
+            // Price calculation will happen automatically via useEffect below
+        }
+
+      } catch (error) {
+        Alert.alert("Error", "Could not load details.");
+        router.back();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id, bookingId]);
+
+  // 2. Calculate Total (Auto runs when dates/vehicle change)
   useEffect(() => {
     if (startDate && endDate && vehicle) {
       calculateTotal();
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, vehicle]);
 
   const calculateTotal = () => {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    
-    // Check if dates are valid and End is after Start
+
     if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end > start) {
-        const diffTime = Math.abs(end.getTime() - start.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-        
-        setDays(diffDays);
-        setTotalPrice(diffDays * Number(vehicle.price));
+      const diffTime = Math.abs(end.getTime() - start.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      setDays(diffDays);
+      setTotalPrice(diffDays * Number(vehicle.price));
     } else {
-        setDays(0);
-        setTotalPrice(0);
+      setDays(0);
+      setTotalPrice(0);
     }
   };
 
-  // --- 3. Handle Booking Submission ---
+  // 3. Handle Submit (Create or Update)
   const handleBooking = async () => {
     if (!startDate || !endDate) {
-        Alert.alert("Missing Info", "Please select start and end dates.");
-        return;
+      Alert.alert("Missing Dates", "Please select both start and end dates.");
+      return;
     }
-    
-    // Logic check: End date must be after start date
-    if (new Date(endDate) <= new Date(startDate)) {
-        Alert.alert("Invalid Dates", "End date must be after start date.");
-        return;
+
+    if (days <= 0) {
+      Alert.alert("Invalid Dates", "End date must be after start date.");
+      return;
     }
 
     setSubmitting(true);
     try {
+      if (bookingId && typeof bookingId === 'string') {
+        // ✅ UPDATE MODE
+        await updateBooking(
+            bookingId,
+            startDate,
+            endDate,
+            totalPrice
+        );
+        Alert.alert("Updated!", "Booking details updated successfully.", [
+            { text: "OK", onPress: () => router.replace("/booking") },
+        ]);
+
+      } else {
+        // ✅ CREATE MODE
         await createBooking(
             vehicle.id,
             vehicle,
@@ -97,100 +131,138 @@ const BookingForm = () => {
             endDate,
             totalPrice
         );
-        Alert.alert("Success! 🎉", "Your booking has been placed successfully.", [
-            { text: "View Bookings", onPress: () => router.replace("/booking") }
+        Alert.alert("Success!", "Your booking has been placed.", [
+            { text: "View Bookings", onPress: () => router.replace("/booking") },
         ]);
+      }
     } catch (error: any) {
-        Alert.alert("Booking Failed", error.message);
+      Alert.alert("Error", error.message);
     } finally {
-        setSubmitting(false);
+      setSubmitting(false);
     }
   };
 
   if (loading) {
     return (
-        <View className={`flex-1 justify-center items-center ${bgMain}`}>
-            <ActivityIndicator color="#10b981" size="large"/>
-        </View>
+      <View className={`flex-1 justify-center items-center ${bgMain}`}>
+        <ActivityIndicator size="large" color="#10b981" />
+      </View>
     );
   }
 
-  if (!vehicle) return null; // Safety check
+  if (!vehicle) return null;
 
   return (
     <View className={`flex-1 ${bgMain}`}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+      
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         
-        {/* Vehicle Image Header */}
-        <View className="relative">
-            <Image source={{ uri: vehicle.imageUrl }} className="w-full h-64" resizeMode="cover" />
-            <TouchableOpacity onPress={() => router.back()} className="absolute top-12 left-4 bg-black/50 p-2 rounded-full">
+        {/* --- Hero Image Section --- */}
+        <View className="relative w-full h-72">
+            <Image 
+                source={{ uri: vehicle.imageUrl }} 
+                className="w-full h-full"
+                resizeMode="cover"
+            />
+            <TouchableOpacity 
+                onPress={() => router.back()} 
+                className="absolute top-12 left-4 w-10 h-10 bg-white/30 backdrop-blur-md rounded-full justify-center items-center"
+            >
                 <Ionicons name="arrow-back" size={24} color="white" />
             </TouchableOpacity>
+            
+            <View className={`absolute bottom-0 w-full h-20 ${isDark ? 'bg-gray-900' : 'bg-white'} opacity-10`} style={{ transform: [{scaleY: -1}] }} />
         </View>
 
-        <View className="p-6">
-            {/* Title & Price Per Day */}
-            <Text className={`text-2xl font-extrabold ${textMain}`}>{vehicle.vehicleBrand} {vehicle.vehicleModel}</Text>
-            <Text className="text-emerald-500 font-bold text-lg mt-1">Rs. {vehicle.price} / Day</Text>
+        {/* --- Content Body --- */}
+        <View className={`flex-1 px-6 -mt-6 rounded-t-3xl ${bgMain} pt-8`}>
+            
+            {/* Title & Price */}
+            <View className="mb-6">
+                <Text className={`text-3xl font-extrabold ${textMain}`}>
+                    {vehicle.vehicleBrand} {vehicle.vehicleModel}
+                </Text>
+                <View className="flex-row items-baseline mt-1">
+                    <Text className="text-emerald-500 text-xl font-bold">Rs. {vehicle.price}</Text>
+                    <Text className={`text-sm ml-1 ${textSub}`}>/ per day</Text>
+                </View>
+            </View>
 
-            {/* Date Selection Section */}
-            <View className={`mt-8 p-5 rounded-2xl border ${inputBg}`}>
-                <Text className={`font-bold mb-4 text-lg ${textMain}`}>Select Dates</Text>
-                
-                {/* ✅ 1. Start Date Component */}
-                <DateInput 
+            {/* Date Selection Card */}
+            <View className={`p-5 rounded-2xl border ${cardBg} ${borderColor}`}>
+                <Text className={`font-bold mb-4 text-lg ${textMain}`}>
+                    {bookingId ? "Edit Trip Dates" : "Trip Dates"}
+                </Text>
+
+                <DateInput
                     label="START DATE"
                     value={startDate}
                     onChange={setStartDate}
-                    iconColor="#10b981" // Green
+                    iconColor="#10b981"
                     isDark={isDark}
                 />
 
-                {/* ✅ 2. End Date Component */}
-                <DateInput 
+                <DateInput
                     label="END DATE"
                     value={endDate}
                     onChange={setEndDate}
-                    iconColor="#ef4444" // Red
+                    iconColor="#ef4444"
                     isDark={isDark}
                 />
             </View>
 
-            {/* Price Summary - ✅ SAFE RENDER */}
-            {days > 0 ? (
-                <View className="mt-6 flex-row justify-between items-center p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
-                    <View>
-                        <Text className="text-emerald-700 font-bold text-xs uppercase">Total Cost</Text>
-                        <Text className={`text-2xl font-extrabold ${isDark ? 'text-white' : 'text-black'}`}>
+            {/* Price Breakdown */}
+            {days > 0 && (
+                <View className="mt-6 p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800">
+                    <Text className="font-bold text-lg text-emerald-700 dark:text-emerald-400 mb-3">
+                        {bookingId ? "New Summary" : "Payment Summary"}
+                    </Text>
+                    
+                    <View className="flex-row justify-between mb-2">
+                        <Text className="text-gray-500 dark:text-gray-400">Duration</Text>
+                        <Text className={`font-bold ${textMain}`}>{days} Days</Text>
+                    </View>
+                    
+                    <View className="flex-row justify-between mb-4">
+                        <Text className="text-gray-500 dark:text-gray-400">Rate</Text>
+                        <Text className={`font-bold ${textMain}`}>Rs. {vehicle.price} x {days}</Text>
+                    </View>
+
+                    <View className="h-[1px] w-full bg-emerald-200 dark:bg-emerald-800 border-dashed border-b mb-4" />
+
+                    <View className="flex-row justify-between items-center">
+                        <Text className={`text-xl font-extrabold ${textMain}`}>Total</Text>
+                        <Text className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
                             Rs. {totalPrice.toLocaleString()}
                         </Text>
                     </View>
-                    <View className="bg-white px-3 py-1 rounded-lg">
-                        <Text className="text-black font-bold">{days} Days</Text>
-                    </View>
                 </View>
-            ) : null}
-
+            )}
+            <View className={`w-full p-5 border-t ${bgMain} ${borderColor} pb-8 shadow-2xl`}>
+                <TouchableOpacity
+                    onPress={handleBooking}
+                    disabled={submitting || days <= 0}
+                    className={`w-full py-4 rounded-2xl flex-row justify-center items-center shadow-lg shadow-emerald-500/30 ${
+                        submitting || days <= 0 ? "bg-gray-300 dark:bg-gray-700" : "bg-black dark:bg-emerald-500"
+                    }`}
+                >
+                    {submitting ? (
+                        <ActivityIndicator color="white" />
+                    ) : (
+                        <Text className="text-white font-bold text-lg tracking-wide">
+                            {/* Button Text වෙනස් වෙනවා Edit ද Create ද කියන එක මත */}
+                            {days > 0 
+                                ? (bookingId ? `Update • Rs. ${totalPrice.toLocaleString()}` : `Confirm • Rs. ${totalPrice.toLocaleString()}`)
+                                : "Select Dates"}
+                        </Text>
+                    )}
+                </TouchableOpacity>
+            </View>
         </View>
       </ScrollView>
-
-      {/* Footer Button - Fixed Position */}
-      <View className={`absolute bottom-0 w-full p-4 border-t ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'}`}>
-        <TouchableOpacity 
-            onPress={handleBooking}
-            disabled={submitting || days === 0}
-            className={`w-full py-4 rounded-2xl items-center ${submitting || days === 0 ? 'bg-gray-500' : 'bg-emerald-500 shadow-lg shadow-emerald-500/30'}`}
-        >
-            {submitting ? (
-                <ActivityIndicator color="white" />
-            ) : (
-                <Text className="text-white font-bold text-lg">Confirm Booking</Text>
-            )}
-        </TouchableOpacity>
-      </View>
     </View>
-  )
-}
+  );
+};
 
 export default BookingForm;
