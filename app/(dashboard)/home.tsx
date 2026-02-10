@@ -31,8 +31,8 @@ const Home = () => {
   const isDark = theme === 'dark';
 
   // --- Dynamic Colors ---
-  const bgMain = isDark ? "bg-gray-900" : "bg-white";
-  const bgCard = isDark ? "bg-gray-800" : "bg-white";
+  const bgMain = isDark ? "bg-black" : "bg-white";
+  const bgCard = isDark ? "bg-gray-900" : "bg-white";
   const textMain = isDark ? "text-white" : "text-black";
   const textSub = isDark ? "text-gray-400" : "text-gray-500";
   const borderCol = isDark ? "border-gray-700" : "border-gray-200";

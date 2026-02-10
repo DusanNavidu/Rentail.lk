@@ -21,7 +21,6 @@ const CLOUD_NAME = "dkige4fxm";
 const UPLOAD_PRESET = "rentail_preset"; 
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
 
-// Upload Function
 const uploadToCloudinary = async (uri: string) => {
   if (!uri) return null;
 
@@ -34,7 +33,7 @@ const uploadToCloudinary = async (uri: string) => {
 
     const response = await FileSystem.uploadAsync(CLOUDINARY_URL, uri, {
       httpMethod: 'POST',
-      uploadType: 1, // Multipart
+      uploadType: 1,
       fieldName: 'file',
       parameters: {
         upload_preset: UPLOAD_PRESET,
@@ -94,13 +93,11 @@ export const addVehicle = async (
   const user = auth.currentUser;
   if (!user) throw new Error("User not authenticated.");
 
-  // Image Upload
   let imageUrl = "";
   if (imageUri) {
     imageUrl = (await uploadToCloudinary(imageUri)) || "";
   }
 
-  // Save to Firestore
   await addDoc(vehiclesCollection, {
     imageUrl,
 
@@ -160,22 +157,53 @@ export const deleteVehicle = async (id: string) => {
   await deleteDoc(ref);
 };
 
-// 4. ✅ Get Single Vehicle (For Edit/View)
 export const getVehicleById = async (id: string) => {
     const docSnap = await getDoc(doc(db, "vehicles", id));
     if (docSnap.exists()) return { id: docSnap.id, ...docSnap.data() };
     throw new Error("Vehicle not found");
 };
 
-// 5. ✅ Update Vehicle
 export const updateVehicle = async (id: string, updatedData: any, imageUri?: string) => {
-    // අලුත් පින්තූරයක් තියෙනවා නම් Upload කරන්න
     if (imageUri) {
         const newImageUrl = await uploadToCloudinary(imageUri);
         updatedData.imageUrl = newImageUrl;
     }
     
-    // Undefined දේවල් අයින් කරන්න JSON trick එක
     const cleanData = JSON.parse(JSON.stringify(updatedData));
     await updateDoc(doc(db, "vehicles", id), cleanData);
+};
+
+export const getAllVehiclesRandoms = async () => {
+  try {
+    const q = query(vehiclesCollection, orderBy("createdAt", "desc")); 
+    const snapshot = await getDocs(q);
+    
+    const vehicles = snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
+    }));
+
+    return vehicles; 
+  } catch (error) {
+    console.error("Error fetching random vehicles:", error);
+    return [];
+  }
+};
+
+export const searchVehicles = async (searchTerm: string) => {
+  try {
+    const q = query(
+      vehiclesCollection, 
+      where("vehicleModel", ">=", searchTerm),
+      where("vehicleModel", "<=", searchTerm + "\uf8ff")
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
+    }));
+  } catch (error) {
+    console.error("Error searching vehicles:", error);
+    return [];
+  }
 };

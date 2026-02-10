@@ -228,7 +228,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({
               <TouchableOpacity
                 onPress={() =>
                   router.push({
-                    pathname: "/add/[id]",
+                    pathname: "/booking/[id]",
                     params: { id: item.id },
                   })
                 }
