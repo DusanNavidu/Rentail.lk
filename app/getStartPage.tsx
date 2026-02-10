@@ -23,7 +23,7 @@ const GetStartPage = () => {
         <View className="mt-14 items-start">
           <Image
             source={require("../assets/images/icon.png")}
-            className="w-24 h-24 mb-6 bg-white rounded-full p-4"
+            className={`w-14 h-14 rounded-full p-4`}
             resizeMode="contain"
           />
           <Text className="text-4xl font-bold text-white mb-4 text-center">

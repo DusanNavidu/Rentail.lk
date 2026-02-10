@@ -1,50 +1,161 @@
-# Welcome to your Expo app 👋
+<div align="center">
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+  <img src="./assets/images/icon.png" alt="Rentail Logo" width="120" />
 
-## Get started
+  # 🚗 Rentail.lk
+  
+  **Sri Lanka's Premier Peer-to-Peer Vehicle Rental Platform**
+  
+  [![React Native](https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactnative.dev/)
+  [![Firebase](https://img.shields.io/badge/Firebase-039BE5?style=for-the-badge&logo=Firebase&logoColor=white)](https://firebase.google.com/)
+  [![Expo](https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+  [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](./LICENSE)
 
-1. Install dependencies
+  <p>
+    <b>Rentail.lk</b> connects vehicle owners with renters seamlessly. Whether it's a car, bike, van, or lorry, find the perfect ride or earn passive income by listing your vehicle.
+  </p>
 
-   ```bash
-   npm install
-   ```
+  [Report Bug](https://github.com/DusanNavidu/Rentail.lk/issues) • [Request Feature](https://github.com/DusanNavidu/Rentail.lk/issues)
 
-2. Start the app
+</div>
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## 📑 Table of Contents
+- [📸 App Previews](#-app-previews)
+- [✨ Key Features](#-key-features)
+- [🛠️ Tech Stack](#️-tech-stack)
+- [🚀 Installation & Setup](#-installation--setup)
+- [⚙️ Configuration](#️-configuration)
+- [📂 Project Structure](#-project-structure)
+- [🗺️ Roadmap](#️-roadmap)
+- [🤝 Contributing](#-contributing)
+- [📞 Contact](#-contact)
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 📸 App Previews
 
-## Get a fresh project
+<div align="center">
+  <table>
+    <tr>
+      <td align="center"><b>🏠 Home Screen</b></td>
+      <td align="center"><b>🚙 Vehicle Details</b></td>
+      <td align="center"><b>📅 Booking Flow</b></td>
+    </tr>
+    <tr>
+      <td><img src="./assets/screenshots/home.png" width="250" /></td>
+      <td><img src="./assets/screenshots/details.png" width="250" /></td>
+      <td><img src="./assets/screenshots/booking.png" width="250" /></td>
+    </tr>
+    <tr>
+      <td align="center"><b>➕ Add Vehicle</b></td>
+      <td align="center"><b>📊 Dashboard</b></td>
+      <td align="center"><b>🌙 Dark Mode</b></td>
+    </tr>
+    <tr>
+      <td><img src="./assets/screenshots/add.png" width="250" /></td>
+      <td><img src="./assets/screenshots/dashboard.png" width="250" /></td>
+      <td><img src="./assets/screenshots/darkmode.png" width="250" /></td>
+    </tr>
+  </table>
+</div>
 
-When you're ready, run:
+---
 
-```bash
-npm run reset-project
-```
+## ✨ Key Features
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 👤 For Renters
+- **🚙 Extensive Listings:** Browse Cars, Vans, Bikes, Tuk-Tuks, Lorries, and more.
+- **🔍 Smart Search:** Filter by Brand (Toyota, Nissan, etc.), Price, and Location.
+- **📅 Easy Booking:** Real-time availability check and price calculation based on dates.
+- **📍 Map View:** View vehicle pick-up locations directly on an interactive map.
+- **📜 History:** Track active, pending, and completed bookings.
 
-## Learn more
+### 🚘 For Vehicle Owners
+- **📝 Easy Listing:** 4-step guided form to add vehicles with photos and specs.
+- **💼 Manage Requests:** Accept or Reject incoming booking requests instantly.
+- **💰 Earnings Dashboard:** Visualize your income and booking performance.
+- **🔄 Availability Control:** Update vehicle status and details anytime.
 
-To learn more about developing your project with Expo, look at the following resources:
+### ⚙️ System Highlights
+- **🔐 Secure Auth:** Powered by Firebase Authentication (Email/Password).
+- **🌗 Theme Support:** Seamless Dark and Light mode switching.
+- **📱 Responsive UI:** Optimized for both Android and iOS devices.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+---
 
-## Join the community
+## 🛠️ Tech Stack
 
-Join our community of developers creating universal apps.
+| Category | Technologies |
+| :--- | :--- |
+| **Frontend** | React Native, Expo, TypeScript |
+| **Styling** | NativeWind (Tailwind CSS) |
+| **Navigation** | Expo Router (File-based routing) |
+| **Backend** | Firebase Firestore (NoSQL DB) |
+| **Authentication** | Firebase Auth |
+| **Storage** | Cloudinary (Image Hosting) |
+| **Maps** | React Native Maps, Expo Location |
+| **UI Components** | React Native Element Dropdown, Lucide Icons |
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+## 🚀 Installation & Setup
+
+Follow these steps to get a local copy up and running.
+
+### Prerequisites
+* **Node.js** (v18 or newer)
+* **npm** or **yarn**
+* **Expo Go** app on your phone (or an Emulator)
+
+### Installation
+
+1.  **Clone the Repo**
+    ```bash
+    git clone [https://github.com/DusanNavidu/Rentail.lk.git](https://github.com/DusanNavidu/Rentail.lk.git)
+    cd Rentail.lk
+    ```
+
+2.  **Install Dependencies**
+    ```bash
+    npm install
+    # or
+    yarn install
+    ```
+
+3.  **Start the App**
+    ```bash
+    npx expo start -c
+    ```
+
+---
+
+## ⚙️ Configuration
+
+To make the app work, you need to configure **Firebase**.
+
+1.  Go to [Firebase Console](https://console.firebase.google.com/).
+2.  Create a new project and add a Web App.
+3.  Create a file named `firebase.ts` inside the `services/` folder.
+4.  Paste your credentials:
+
+```typescript
+// services/firebase.ts
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const db = getFirestore(app);

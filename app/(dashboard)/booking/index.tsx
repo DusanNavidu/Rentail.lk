@@ -20,7 +20,7 @@ const BookingList = () => {
   const [refreshing, setRefreshing] = useState(false);
 
   // --- Colors ---
-  const bgMain = isDark ? "bg-gray-900" : "bg-gray-50";
+  const bgMain = isDark ? "bg-black" : "bg-gray-50";
   const textMain = isDark ? "text-white" : "text-black";
   const textSub = isDark ? "text-gray-400" : "text-gray-500";
 

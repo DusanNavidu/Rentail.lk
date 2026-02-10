@@ -12,12 +12,17 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useRouter } from "expo-router";
-import { registerUser } from "@/services/authService";
+import { registerUser, googleLogin } from "@/services/authService";
 import { useLoader } from "@/hooks/useLoader";
 import { Ionicons } from "@expo/vector-icons";
 import { ThemeContext } from "@/context/ThemeContext";
+
+import * as WebBrowser from "expo-web-browser";
+import * as Google from "expo-auth-session/providers/google";
+
+WebBrowser.maybeCompleteAuthSession();
 
 const Register = () => {
   const router = useRouter();
@@ -40,6 +45,31 @@ const Register = () => {
   const inputBg = isDark ? "bg-gray-800" : "bg-white";
   const inputBorder = isDark ? "border-gray-700" : "border-gray-200";
   const iconColor = isDark ? "#9ca3af" : "#6B7280";
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com",
+    androidClientId: "YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com",
+  });
+
+  useEffect(() => {
+    if (response?.type === "success") {
+      const { id_token } = response.params;
+      handleGoogleSignUp(id_token);
+    }
+  }, [response]);
+
+  const handleGoogleSignUp = async (token: string) => {
+    if (!token) return;
+    try {
+      showLoader();
+      await googleLogin(token);
+      router.replace("/(dashboard)/home");
+    } catch (error) {
+      Alert.alert("Error", "Google Registration Failed");
+    } finally {
+      hideLoader();
+    }
+  };
 
   const handleRegister = async () => {
     if (isLoading) return;
@@ -175,11 +205,18 @@ const Register = () => {
           </View>
 
           <View className="mb-6">
-            <Pressable className={`mb-4 px-6 py-3 rounded-3xl border ${inputBg} ${inputBorder}`}>
-              <Text className={`text-center text-sm ${textSub}`}>Continue with Google</Text>
+            <Pressable 
+              onPress={() => promptAsync()}
+              disabled={!request}
+              className={`mb-4 px-6 py-3 rounded-3xl border flex-row justify-center items-center gap-2 ${inputBg} ${inputBorder}`}
+            >
+              <Ionicons name="logo-google" size={20} color={isDark ? "white" : "black"} />
+              <Text className={`text-center text-sm font-bold ${textSub}`}>Continue with Google</Text>
             </Pressable>
-            <Pressable className={`px-6 py-3 rounded-3xl border ${inputBg} ${inputBorder}`}>
-              <Text className={`text-center text-sm ${textSub}`}>Continue with Facebook</Text>
+            
+            <Pressable className={`px-6 py-3 rounded-3xl border flex-row justify-center items-center gap-2 ${inputBg} ${inputBorder}`}>
+              <Ionicons name="logo-facebook" size={20} color="#1877F2" />
+              <Text className={`text-center text-sm font-bold ${textSub}`}>Continue with Facebook</Text>
             </Pressable>
           </View>
 

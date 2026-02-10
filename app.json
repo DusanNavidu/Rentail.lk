@@ -1,17 +1,20 @@
 {
   "expo": {
     "name": "Rentail.lk",
-    "slug": "Rentail.lk",
+    "slug": "rentail-lk",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "rentaillk",
+    "scheme": "rentail",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.dusan.rentail"
     },
     "android": {
+      "package": "com.dusan.rentail",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -39,11 +42,18 @@
           }
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9b376e8e-aa4d-4ad0-847e-93b8907d9bc2"
+      }
     }
   }
 }

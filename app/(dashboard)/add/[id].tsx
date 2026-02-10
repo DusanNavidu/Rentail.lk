@@ -89,6 +89,8 @@ const VehicleDetails = () => {
             </View>
           </View>
 
+          
+
           <View className={`flex-row justify-between p-4 rounded-2xl mb-8 border ${bgSecondary} ${borderCol}`}>
             <View className={`items-center flex-1 border-r ${borderCol}`}>
               <MaterialIcons name="event-seat" size={24} color={iconColor} />

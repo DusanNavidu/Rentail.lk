@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "636379772271",
+    "project_id": "rentail-app-b08ea",
+    "storage_bucket": "rentail-app-b08ea.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:636379772271:android:3ef58d7867e5baaa05e49a",
+        "android_client_info": {
+          "package_name": "com.dusan.rentail"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "636379772271-q17jgdq3o1eree9e7uvtf97k47lv06t8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCoAENLuv2CzX0bk-8J1sXfg3nNg8gBDXA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "636379772271-q17jgdq3o1eree9e7uvtf97k47lv06t8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

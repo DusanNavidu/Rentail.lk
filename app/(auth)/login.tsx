@@ -12,12 +12,17 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useRouter } from "expo-router";
 import { useLoader } from "@/hooks/useLoader";
-import { login } from "@/services/authService";
+import { googleLogin, login } from "@/services/authService";
 import { Ionicons } from "@expo/vector-icons";
 import { ThemeContext } from "@/context/ThemeContext";
+
+import * as WebBrowser from "expo-web-browser";
+import * as Google from "expo-auth-session/providers/google";
+
+WebBrowser.maybeCompleteAuthSession();
 
 const Login = () => {
   const router = useRouter();
@@ -37,6 +42,33 @@ const Login = () => {
   const inputBorder = isDark ? "border-gray-700" : "border-gray-200";
   const iconColor = isDark ? "#9ca3af" : "#6B7280";
 
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: "636379772271-q17jgdq3o1eree9e7uvtf97k47lv06t8.apps.googleusercontent.com",
+    androidClientId: "636379772271-q17jgdq3o1eree9e7uvtf97k47lv06t8.apps.googleusercontent.com",
+  });
+
+  useEffect(() => {
+    if (response?.type === "success") {
+      const { id_token } = response.params;
+      handleGoogleSignIn(id_token);
+    } else if (response?.type === "error") {
+      Alert.alert("Error", "Google Sign-In failed.");
+    }
+  }, [response]);
+
+  const handleGoogleSignIn = async (token: string) => {
+    if (!token) return;
+    try {
+      showLoader();
+      await googleLogin(token);
+      router.replace("/(dashboard)/home");
+    } catch (error) {
+      Alert.alert("Error", "Google Login Failed");
+    } finally {
+      hideLoader();
+    }
+  };
+
   const handleLogin = async () => {
     if (!email || !password || isLoading) {
       Alert.alert("Please enter email and password");
@@ -45,7 +77,7 @@ const Login = () => {
     try {
       showLoader();
       await login(email, password);
-      router.replace("/home");
+      router.replace("/(dashboard)/home");
     } catch (e) {
       console.error(e);
       Alert.alert("Login fail");
@@ -68,7 +100,7 @@ const Login = () => {
           <View className="flex-row items-center mt-12 mb-6">
             <Image
               source={require("../../assets/images/icon.png")}
-              className={`w-24 h-24 rounded-full p-4 ${isDark ? "bg-gray-800" : "bg-white"}`}
+              className={`w-14 h-14 rounded-full p-4 ${isDark ? "bg-gray-800" : "bg-white"}`}
               resizeMode="contain"
             />
             <Text className={`text-3xl font-bold ${textMain} ml-2`}>Rentail.lk</Text>
@@ -137,11 +169,18 @@ const Login = () => {
           </View>
 
           <View className="mb-6">
-            <Pressable className={`mb-4 px-6 py-3 rounded-3xl border ${inputBg} ${inputBorder}`}>
-              <Text className={`text-center text-sm ${textSub}`}>Continue with Google</Text>
+            <Pressable 
+              onPress={() => promptAsync()}
+              disabled={!request}
+              className={`mb-4 px-6 py-3 rounded-3xl border flex-row justify-center items-center gap-2 ${inputBg} ${inputBorder}`}
+            >
+              <Ionicons name="logo-google" size={20} color={isDark ? "white" : "black"} />
+              <Text className={`text-center text-sm font-bold ${textSub}`}>Continue with Google</Text>
             </Pressable>
-            <Pressable className={`px-6 py-3 rounded-3xl border ${inputBg} ${inputBorder}`}>
-              <Text className={`text-center text-sm ${textSub}`}>Continue with Facebook</Text>
+            
+            <Pressable className={`px-6 py-3 rounded-3xl border flex-row justify-center items-center gap-2 ${inputBg} ${inputBorder}`}>
+              <Ionicons name="logo-facebook" size={20} color="#1877F2" />
+              <Text className={`text-center text-sm font-bold ${textSub}`}>Continue with Facebook</Text>
             </Pressable>
           </View>
 
