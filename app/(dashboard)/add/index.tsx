@@ -3,7 +3,7 @@ import React, { useCallback, useState, useContext, useRef, useEffect } from "rea
 import { Ionicons, MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useLoader } from "@/hooks/useLoader";
-import { deleteVehicle, getAllVehicles } from "@/services/vehicleService";
+import { deleteVehicle, getMyVehicles } from "@/services/vehicleService";
 import Toast from 'react-native-toast-message';
 import { ThemeContext } from "@/context/ThemeContext";
 import { LinearGradient } from 'expo-linear-gradient';
@@ -40,7 +40,7 @@ const VehicleList = () => {
   const fetchVehicles = async (isRefreshing = false) => {
     if (!isRefreshing) setLoadingData(true); 
     try {
-      const data = await getAllVehicles();
+      const data = await getMyVehicles();
       setVehicles(data);
     } catch (error) {
       Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to load vehicles' });

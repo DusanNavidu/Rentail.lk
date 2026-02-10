@@ -147,9 +147,9 @@ const Home = () => {
 
           {/* Right Side Icons (Chat & Notifications) */}
           <View className="flex-row gap-3">
-            {/* ✅ Chat Button (New) */}
+            {/* ✅ Chat Button */}
             <TouchableOpacity 
-              onPress={() => router.push("/chat/index")} 
+              onPress={() => router.push("/chat")}  // මෙතන "/chat" කියලා දෙන්න
               className={`p-2 rounded-full border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}
             >
                <Ionicons name="chatbubble-ellipses-outline" size={24} color={iconColor} />

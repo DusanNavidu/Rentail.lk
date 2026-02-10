@@ -207,3 +207,21 @@ export const searchVehicles = async (searchTerm: string) => {
     return [];
   }
 };
+
+export const getMyVehicles = async () => {
+  try {
+    const user = auth.currentUser;
+    if (!user) return [];
+
+    const q = query(vehiclesCollection, where("userId", "==", user.uid));
+    
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
+    }));
+  } catch (error) {
+    console.error("Error fetching my vehicles:", error);
+    return [];
+  }
+};
