@@ -10,10 +10,10 @@ interface VehicleCardProps {
   showDistance?: boolean;
   isFullWidth?: boolean;
   isDark: boolean;
-  borderCol?: string; // Optional made
-  isOwner?: boolean; // ✅ අලුතින් එකතු කළා: අයිතිකරුද කියලා බලන්න
-  onEdit?: () => void; // ✅ Edit Function
-  onDelete?: () => void; // ✅ Delete Function
+  borderCol?: string;
+  isOwner?: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 const VehicleCard: React.FC<VehicleCardProps> = ({
@@ -22,14 +22,13 @@ const VehicleCard: React.FC<VehicleCardProps> = ({
   showDistance = false,
   isFullWidth = false,
   isDark,
-  isOwner = false, // Default is false (Customer View)
+  isOwner = false,
   onEdit,
   onDelete,
 }) => {
   const router = useRouter();
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  // Pulse Animation (Only run if NOT owner)
   useEffect(() => {
     if (!isOwner) {
       Animated.loop(
@@ -49,7 +48,6 @@ const VehicleCard: React.FC<VehicleCardProps> = ({
     }
   }, [scaleAnim, isOwner]);
 
-  // Colors
   const cardBg = isDark
     ? (["#1f2937", "#111827"] as const)
     : (["#ffffff", "#f9fafb"] as const);
@@ -63,8 +61,6 @@ const VehicleCard: React.FC<VehicleCardProps> = ({
     <TouchableOpacity
       activeOpacity={0.95}
       onPress={() => {
-        // If owner, maybe go to edit? Or just view details.
-        // For now, let's keep it consistent: view details or edit form
         if (isOwner && onEdit) {
           onEdit();
         } else {
@@ -84,7 +80,6 @@ const VehicleCard: React.FC<VehicleCardProps> = ({
         } as any
       }
     >
-      {/* --- TOP SECTION: IMAGE --- */}
       <View className="h-[200px] w-full relative">
         <Image
           source={{ uri: item.imageUrl }}
@@ -92,7 +87,6 @@ const VehicleCard: React.FC<VehicleCardProps> = ({
           resizeMode="cover"
         />
 
-        {/* Distance Badge */}
         {showDistance && item.distance !== undefined && (
           <View className="absolute top-3 left-3 bg-black/60 px-2.5 py-1 rounded-full border border-white/20 flex-row items-center backdrop-blur-md">
             <Ionicons name="location" size={10} color="#4ade80" />
@@ -102,9 +96,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({
           </View>
         )}
 
-        {/* --- OWNER ACTIONS vs CUSTOMER HEART --- */}
         {isOwner ? (
-          // ✅ Owner View: Edit & Delete Buttons
           <View className="absolute top-3 right-3 flex-row gap-2">
             <TouchableOpacity
               onPress={(e) => {
@@ -126,20 +118,17 @@ const VehicleCard: React.FC<VehicleCardProps> = ({
             </TouchableOpacity>
           </View>
         ) : (
-          // ✅ Customer View: Heart Icon
           <View className="absolute top-3 right-3 bg-white/30 p-2 rounded-full backdrop-blur-md">
             <Ionicons name="heart-outline" size={18} color="white" />
           </View>
         )}
       </View>
 
-      {/* --- BOTTOM SECTION: CONTENT --- */}
       <LinearGradient
         colors={cardBg}
         className="p-4 rounded-b-[24px] border-x border-b"
         style={{ borderColor: isDark ? "#374151" : "#e5e7eb" }}
       >
-        {/* Brand & Title */}
         <View className="flex-row justify-between items-start mb-2">
           <View>
             <Text className="text-emerald-500 text-[10px] font-bold tracking-widest uppercase mb-0.5">
@@ -159,7 +148,6 @@ const VehicleCard: React.FC<VehicleCardProps> = ({
           </View>
         </View>
 
-        {/* Specs Pills */}
         <View className="flex-row gap-2 mb-4 mt-1">
           <View
             className={`flex-row items-center px-2.5 py-1 rounded-lg border ${pillBg}`}
@@ -189,12 +177,10 @@ const VehicleCard: React.FC<VehicleCardProps> = ({
           </View>
         </View>
 
-        {/* Divider */}
         <View
           className={`h-[1px] w-full mb-3 ${isDark ? "bg-gray-700" : "bg-gray-200"}`}
         />
 
-        {/* Footer: Price & Button */}
         <View className="flex-row justify-between items-center">
           <View>
             <Text className={`${subTextColor} text-[10px] font-bold uppercase`}>
@@ -210,9 +196,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({
             </View>
           </View>
 
-          {/* --- ACTION BUTTON --- */}
           {isOwner ? (
-            // ✅ Owner View: Just text or Status (No Booking Button)
             <View
               className={`px-3 py-1.5 rounded-lg ${isDark ? "bg-gray-800" : "bg-gray-100"}`}
             >
@@ -223,7 +207,6 @@ const VehicleCard: React.FC<VehicleCardProps> = ({
               </Text>
             </View>
           ) : (
-            // ✅ Customer View: Animated Booking Button
             <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
               <TouchableOpacity
                 onPress={() =>

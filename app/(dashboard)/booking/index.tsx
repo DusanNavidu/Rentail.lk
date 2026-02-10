@@ -24,13 +24,11 @@ const BookingList = () => {
   const textMain = isDark ? "text-white" : "text-black";
   const textSub = isDark ? "text-gray-400" : "text-gray-500";
 
-  // --- Data Fetching ---
   const fetchAllData = async () => {
     setLoading(true);
-    // Fetch both simultaneously
     const [userData, ownerData] = await Promise.all([
-      getUserBookings(),   // My Trips
-      getOwnerBookings()   // My Car Bookings
+      getUserBookings(),
+      getOwnerBookings()
     ]);
     
     setMyBookings(userData);
@@ -48,7 +46,6 @@ const BookingList = () => {
     setRefreshing(false);
   }, []);
 
-  // --- Tab Button Component ---
   const TabButton = ({ title, id }: { title: string, id: 'my_trips' | 'incoming' }) => (
     <TouchableOpacity
       onPress={() => setActiveTab(id)}
@@ -70,7 +67,6 @@ const BookingList = () => {
 
   return (
     <View className={`flex-1 ${bgMain} pt-12`}>
-      {/* Header */}
       <View className="px-4 mb-2 flex-row justify-between items-center">
         <Text className={`text-2xl font-extrabold ${textMain}`}>Bookings</Text>
         <TouchableOpacity onPress={fetchAllData}>
@@ -78,13 +74,11 @@ const BookingList = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Tabs */}
       <View className={`flex-row mb-4 border-b ${isDark ? 'border-gray-800' : 'border-gray-200'}`}>
         <TabButton title="My Trips" id="my_trips" />
         <TabButton title="My Car Requests" id="incoming" />
       </View>
 
-      {/* Content */}
       <View className="flex-1 px-4">
         {loading ? (
           <ActivityIndicator size="large" color="#10b981" className="mt-10" />
@@ -111,14 +105,12 @@ const BookingList = () => {
             )}
             renderItem={({ item }) => (
               activeTab === 'my_trips' ? (
-                // 1. My Trip Card (Simple View)
                 <BookingCard 
                     item={item} 
                     isDark={isDark} 
                     onUpdate={fetchAllData} 
                 />
               ) : (
-                // 2. Incoming Request Card (With Accept/Reject)
                 <IncomingBookingCard 
                   item={item} 
                   isDark={isDark} 

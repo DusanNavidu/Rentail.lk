@@ -19,7 +19,6 @@ import { getVehicleById } from "@/services/vehicleService";
 const BookingForm = () => {
   const router = useRouter();
   
-  // vehicle ID (id) සහ bookingId ලබා ගැනීම
   const { id, bookingId } = useLocalSearchParams();
 
   const [vehicle, setVehicle] = useState<any>(null);
@@ -35,31 +34,25 @@ const BookingForm = () => {
   const themeContext = useContext(ThemeContext);
   const isDark = (themeContext as any)?.theme === 'dark'; 
 
-  // --- Colors ---
   const bgMain = isDark ? "bg-gray-900" : "bg-white";
   const textMain = isDark ? "text-white" : "text-gray-900";
   const textSub = isDark ? "text-gray-400" : "text-gray-500";
   const cardBg = isDark ? "bg-gray-800" : "bg-gray-50";
   const borderColor = isDark ? "border-gray-700" : "border-gray-200";
 
-  // 1. Fetch Data (Vehicle & Booking if Edit Mode)
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // A. Fetch Vehicle Details
         if (id && typeof id === 'string') {
             const vData = await getVehicleById(id);
             setVehicle(vData);
         }
 
-        // B. Fetch Booking Details (If Editing)
         if (bookingId && typeof bookingId === 'string') {
             const bData: any = await getBookingById(bookingId);
-            // Pre-fill Dates
             setStartDate(bData.startDate);
             setEndDate(bData.endDate);
-            // Price calculation will happen automatically via useEffect below
         }
 
       } catch (error) {
@@ -73,7 +66,6 @@ const BookingForm = () => {
     fetchData();
   }, [id, bookingId]);
 
-  // 2. Calculate Total (Auto runs when dates/vehicle change)
   useEffect(() => {
     if (startDate && endDate && vehicle) {
       calculateTotal();
@@ -96,7 +88,6 @@ const BookingForm = () => {
     }
   };
 
-  // 3. Handle Submit (Create or Update)
   const handleBooking = async () => {
     if (!startDate || !endDate) {
       Alert.alert("Missing Dates", "Please select both start and end dates.");
@@ -111,7 +102,6 @@ const BookingForm = () => {
     setSubmitting(true);
     try {
       if (bookingId && typeof bookingId === 'string') {
-        // ✅ UPDATE MODE
         await updateBooking(
             bookingId,
             startDate,
@@ -123,7 +113,6 @@ const BookingForm = () => {
         ]);
 
       } else {
-        // ✅ CREATE MODE
         await createBooking(
             vehicle.id,
             vehicle,
@@ -158,7 +147,6 @@ const BookingForm = () => {
       
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         
-        {/* --- Hero Image Section --- */}
         <View className="relative w-full h-72">
             <Image 
                 source={{ uri: vehicle.imageUrl }} 
@@ -175,10 +163,8 @@ const BookingForm = () => {
             <View className={`absolute bottom-0 w-full h-20 ${isDark ? 'bg-gray-900' : 'bg-white'} opacity-10`} style={{ transform: [{scaleY: -1}] }} />
         </View>
 
-        {/* --- Content Body --- */}
         <View className={`flex-1 px-6 -mt-6 rounded-t-3xl ${bgMain} pt-8`}>
             
-            {/* Title & Price */}
             <View className="mb-6">
                 <Text className={`text-3xl font-extrabold ${textMain}`}>
                     {vehicle.vehicleBrand} {vehicle.vehicleModel}
@@ -189,7 +175,6 @@ const BookingForm = () => {
                 </View>
             </View>
 
-            {/* Date Selection Card */}
             <View className={`p-5 rounded-2xl border ${cardBg} ${borderColor}`}>
                 <Text className={`font-bold mb-4 text-lg ${textMain}`}>
                     {bookingId ? "Edit Trip Dates" : "Trip Dates"}
@@ -212,7 +197,6 @@ const BookingForm = () => {
                 />
             </View>
 
-            {/* Price Breakdown */}
             {days > 0 && (
                 <View className="mt-6 p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800">
                     <Text className="font-bold text-lg text-emerald-700 dark:text-emerald-400 mb-3">
@@ -251,7 +235,6 @@ const BookingForm = () => {
                         <ActivityIndicator color="white" />
                     ) : (
                         <Text className="text-white font-bold text-lg tracking-wide">
-                            {/* Button Text වෙනස් වෙනවා Edit ද Create ද කියන එක මත */}
                             {days > 0 
                                 ? (bookingId ? `Update • Rs. ${totalPrice.toLocaleString()}` : `Confirm • Rs. ${totalPrice.toLocaleString()}`)
                                 : "Select Dates"}

@@ -153,14 +153,14 @@ const Home = () => {
           </TouchableOpacity>
         </View>
 
-        {/* ✅ NEW BRANDS SELECTOR */}
+        {/* NEW BRANDS SELECTOR */}
         <BrandSelector 
             selectedBrand={selectedBrand} 
             onSelectBrand={setSelectedBrand} 
             isDark={isDark} 
         />
 
-        {/* ✅ NEW CATEGORIES SELECTOR */}
+        {/* NEW CATEGORIES SELECTOR */}
         <CategorySelector 
             selectedCategory={selectedCategory} 
             onSelectCategory={setSelectedCategory} 
